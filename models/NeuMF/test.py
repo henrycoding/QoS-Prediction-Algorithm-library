@@ -24,9 +24,6 @@ Density:0.20, type:rt, mae:0.5651, mse:3.5951, rmse:1.8961
 
 freeze_random()  # 冻结随机数 保证结果一致
 
-logger = TNLog('NeuMF')
-logger.initial_logger()
-
 for density in [0.05, 0.1, 0.15, 0.2]:
     type_ = "rt"
     rt_data = MatrixDataset(type_)

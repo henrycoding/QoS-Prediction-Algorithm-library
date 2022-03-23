@@ -64,7 +64,7 @@ class NeuMFModel(ModelBase):
         self.name = __class__.__name__
 
         if layers is None:
-            layers = [32, 8]
+            layers = [32, 16, 8]
         self.model = NeuMF(num_users, num_items, latent_dim, layers=layers, output_dim=output_dim)
         if use_gpu:
             self.model.to(self.device)

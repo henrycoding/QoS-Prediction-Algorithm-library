@@ -1,5 +1,7 @@
 import torch
 from data import MatrixDataset, ToTorchDataset
+from models.NeuMF.model import NeuMF, NeuMFModel
+from root import absolute
 from torch import nn, optim
 from torch.nn.modules import loss
 from torch.optim import Adam
@@ -13,7 +15,6 @@ import os
 from utils.model_util import freeze_random
 # 日志
 from utils.mylogger import TNLog
-
 """
 RESULT NeuMF:
 Density:0.05, type:rt, mae:0.6073, mse:3.6153, rmse:1.9014
@@ -23,6 +24,9 @@ Density:0.20, type:rt, mae:0.5651, mse:3.5951, rmse:1.8961
 """
 
 freeze_random()  # 冻结随机数 保证结果一致
+
+# logger = TNLog('NeuMF')
+# logger.initial_logger()
 
 for density in [0.05, 0.1, 0.15, 0.2]:
     type_ = "rt"

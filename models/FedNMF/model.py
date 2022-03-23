@@ -10,7 +10,8 @@ from .client import Clients
 from .server import Server
 
 
-class FedMF(object):
+class FedNMF(object):
+
     def __init__(self, server: Server, clients: Clients) -> None:
         super().__init__()
         self.server = server
@@ -19,7 +20,7 @@ class FedMF(object):
         self.logger = TNLog(self.name)
         self.logger.initial_logger()
 
-    def fit(self, epochs, lambda_, lr, test_triad, scaler=None):
+    def fit(self, epochs, lr, test_triad, scaler=None, interval=10):
         best_mae = None
         is_better = True
         for epoch in tqdm(range(epochs), desc="Epochs"):
@@ -28,13 +29,13 @@ class FedMF(object):
             for client_id, client in self.clients:
                 # client upgrade
                 gradient_from_user.extend(
-                    client.fit(self.server.items_vec, lambda_, lr))
+                    client.fit(self.server.items_vec, lr))
 
             # server upgrade
             self.server.upgrade(lr, gradient_from_user)
 
-            if (epoch + 1) % 200 == 0:
-                y_list, y_pred_list = self.predict(test_triad, scaler=scaler)
+            if (epoch + 1) % interval == 0:
+                y_list, y_pred_list = self.predict(test_triad)
                 mae_ = mae(y_list, y_pred_list)
                 mse_ = mse(y_list, y_pred_list)
                 rmse_ = rmse(y_list, y_pred_list)
@@ -71,12 +72,12 @@ class FedMF(object):
                 triad,
                 resume=False,
                 user_vec_path=None,
-                item_vec_path=None,
-                scaler=None):
+                item_vec_path=None):
 
         y_list = []
         y_pred_list = []
 
+        # 使用本地结果
         if resume:
             users_vec, items_vec = self.load_checkpoint(
                 user_vec_path, item_vec_path)
@@ -92,12 +93,5 @@ class FedMF(object):
                     iid].T
                 y_list.append(rate)
                 y_pred_list.append(y_pred)
-
-        if scaler is not None:
-            y_list = np.array(y_list, dtype=np.float)
-            y_pred_list = np.array(y_pred_list, dtype=np.float)
-
-            y_list = scaler.inverse_transform(y_list)
-            y_pred_list = scaler.inverse_transform(y_pred_list)
 
         return y_list, y_pred_list

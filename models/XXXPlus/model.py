@@ -36,14 +36,16 @@ class XXXPlus(nn.Module):
         # ])
 
         # output
-        self.output_layers = nn.Linear(output_size, output_dim)
+        self.output_layers = nn.Linear(output_size + blocks_size[-1],
+                                       output_dim)
 
     def forward(self, user_idxes: list, item_idxes: list):
         user_embedding = self.user_embedding(user_idxes)
         item_embedding = self.item_embedding(item_idxes)
         x = torch.cat([user_embedding, item_embedding], dim=1)
-        x,y = self.decrease_encoder(x)
-        x = self.increase_encoder(x,y)
+        x1, y = self.decrease_encoder(x)
+        x2 = self.increase_encoder(x1, y)
+        x = torch.cat([x1, x2], dim=-1)
         x = self.output_layers(x)
         return x
 

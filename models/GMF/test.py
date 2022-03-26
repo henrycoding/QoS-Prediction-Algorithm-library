@@ -1,5 +1,6 @@
 import torch
 from data import MatrixDataset, ToTorchDataset
+from models.GMF.model import GMFModel
 from root import absolute
 from torch import nn, optim
 from torch.nn.modules import loss
@@ -7,8 +8,6 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import freeze_random
-
-from model import GMFModel
 """
 RESULT GMF:
 """
@@ -29,11 +28,17 @@ for density in [0.05, 0.1, 0.15, 0.2]:
 
     lr = 0.001
     epochs = 100
-    loss_fn = nn.SmoothL1Loss()
+    # loss_fn = nn.SmoothL1Loss()
+    loss_fn = nn.L1Loss()
 
-    dim = 8
+    dim = 64
 
-    mlp = GMFModel(loss_fn, rt_data.row_n, rt_data.col_n, dim=dim)
+    mlp = GMFModel(loss_fn,
+                   rt_data.row_n,
+                   rt_data.col_n,
+                   dim=dim,
+                   layers=[64, 32])
+    print(mlp)
     opt = Adam(mlp.parameters(), lr=lr)
 
     mlp.fit(train_dataloader, epochs, opt, eval_loader=test_dataloader)

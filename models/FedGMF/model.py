@@ -1,7 +1,7 @@
-from os import fchdir
 import random
 from collections import UserDict
 from lib2to3.pgen2.driver import Driver
+from os import fchdir
 
 import numpy as np
 import torch
@@ -21,30 +21,40 @@ from .server import Server
 
 
 class FedGMF(nn.Module):
-    def __init__(self, n_user, n_item, dim=8, output_dim=1) -> None:
+    def __init__(self, n_user, n_item, layer, dim=8, output_dim=1) -> None:
         super(FedGMF, self).__init__()
 
         self.num_users = n_user
         self.num_items = n_item
         self.latent_dim = dim
+        self.layer = layer
 
         self.embedding_user = nn.Embedding(num_embeddings=self.num_users,
                                            embedding_dim=self.latent_dim)
         self.embedding_item = nn.Embedding(num_embeddings=self.num_items,
                                            embedding_dim=self.latent_dim)
+        self.fc_layers = nn.ModuleList()
 
-        self.fc_layer = nn.Sequential(nn.Linear(self.latent_dim, 16),
-                                      nn.Dropout(0.3), nn.Linear(16, 64),
-                                      nn.Dropout(0.5), nn.Linear(64, 32),
-                                      nn.Dropout(0.2))
-        self.fc_output = nn.Linear(32, output_dim)
+        for idx, (in_size,
+                  out_size) in enumerate(zip(self.layer[:-1], self.layer[1:])):
+            self.fc_layers.append(nn.Linear(in_size, out_size))
+
+        # self.fc_layer = nn.Sequential(nn.Linear(self.latent_dim, 16),
+        #                               nn.Dropout(0.3), nn.Linear(16, 64),
+        #                               nn.Dropout(0.5), nn.Linear(64, 32),
+        #                               nn.Dropout(0.2))
+        self.fc_output = nn.Linear(self.layer[-1], output_dim)
 
     def forward(self, user_idx, item_idx):
         user_embedding = self.embedding_user(user_idx)
         item_embedding = self.embedding_item(item_idx)
-        element_product = torch.mul(user_embedding, item_embedding)
-        x = nn.Dropout()(element_product)
-        x = self.fc_layer(x)
+        x = torch.mul(user_embedding, item_embedding)
+        x = nn.Dropout()(x)
+        for fc_layer in self.fc_layers:
+            x = fc_layer(x)
+            x = nn.GELU()(x)
+            x = nn.Dropout()(x)
+
         x = self.fc_output(x)
         return x
 
@@ -56,13 +66,14 @@ class FedGMFModel(FedModelBase):
                  n_user,
                  n_item,
                  dim,
+                 layer,
                  output_dim=1,
                  use_gpu=True,
                  optimizer="adam") -> None:
         self.device = ("cuda" if
                        (use_gpu and torch.cuda.is_available()) else "cpu")
         self.name = __class__.__name__
-        self._model = FedGMF(n_user, n_item, dim, output_dim)
+        self._model = FedGMF(n_user, n_item, layer, dim, output_dim)
 
         self.server = Server()
         self.clients = Clients(triad, self._model, self.device)

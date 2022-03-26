@@ -109,4 +109,5 @@ if __name__ == "__main__":
         trainable_num = sum(p.numel()
                             for p in net.parameters() if p.requires_grad)
         return {'Total': total_num, 'Trainable': trainable_num}
+    print(m)
     print(get_parameter_number(m))

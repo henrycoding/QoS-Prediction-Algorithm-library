@@ -27,25 +27,26 @@ class MLP(nn.Module):
         self.embedding_item = nn.Embedding(num_embeddings=self.num_items,
                                            embedding_dim=self.latent_dim)
 
-        self.cf_layers = nn.ModuleList()
+        self.fc_layers = nn.ModuleList()
 
         # MLP的第一层
         # 输入是用户特征向量 + 项目特征向量，因为假定特征空间维度都是 latemt_dim，因此输入维度大小为 2 * latemt_dim
-        self.cf_layers.append(nn.Linear(self.latent_dim * 2, layers[0]))
+        self.fc_layers.append(nn.Linear(self.latent_dim * 2, layers[0]))
 
         for in_size, out_size in zip(layers, layers[1:]):
-            self.cf_layers.append(nn.Linear(in_size, out_size))
+            self.fc_layers.append(nn.Linear(in_size, out_size))
 
-        self.cf_output = nn.Linear(layers[-1], output_dim)
+        self.fc_output = nn.Linear(layers[-1], output_dim)
 
     def forward(self, user_idx, item_idx):
         user_embedding = self.embedding_user(user_idx)
         item_embedding = self.embedding_item(item_idx)
         x = torch.cat([user_embedding, item_embedding], dim=-1)
-        for cf_layer in self.cf_layers:
-            x = cf_layer(x)
+        for fc_layer in self.fc_layers:
+            x = fc_layer(x)
             x = nn.ReLU()(x)
-        x = self.cf_output(x)
+            
+        x = self.fc_output(x)
         return x
 
 

@@ -51,6 +51,8 @@ train, test = md.split_train_test(desnity)
 # loss_fn = nn.SmoothL1Loss()
 loss_fn = nn.L1Loss()
 
+activation = nn.GELU
+
 user_params = {
     "type_": "cat",  # embedding层整合方式 stack or cat
     "embedding_nums": u_info.embedding_nums,  # 每个要embedding的特征的总个数
@@ -71,8 +73,8 @@ train_dataloader = DataLoader(train_dataset, batch_size=128)
 test_dataloader = DataLoader(test_dataset, batch_size=2048)
 
 model = XXXPlusModel(user_params, item_params, 48, 128, [128, 64, 32],
-                     [2, 2, 2], loss_fn)
-opt = Adam(model.parameters(), lr=0.0005)
+                    [3, 3], loss_fn, activation)
+opt = Adam(model.parameters(), lr=0.0005,weight_decay=0.001)
 print(f"模型参数:", count_parameters(model))
 model.fit(train_dataloader,
           epochs,

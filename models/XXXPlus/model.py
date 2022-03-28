@@ -14,6 +14,7 @@ class XXXPlus(nn.Module):
                  output_size,
                  blocks_size,
                  deepths,
+                 activation,
                  output_dim=1) -> None:
         super().__init__()
 
@@ -23,11 +24,13 @@ class XXXPlus(nn.Module):
 
         self.decrease_encoder = ResNetEncoder(in_size=in_size,
                                               blocks_sizes=blocks_size,
-                                              deepths=deepths)
+                                              deepths=deepths,
+                                              activation=activation)
         self.increase_encoder = ResNetEncoder_v2(
             output_size=output_size,
             blocks_sizes=blocks_size[::-1],
-            deepths=deepths)
+            deepths=deepths,
+            activation=activation)
 
         # decoder
         # self.fc_layers = nn.Sequential(*[
@@ -61,11 +64,12 @@ class XXXPlusModel(ModelBase):
                  blocks_size,
                  deepths,
                  loss_fn,
+                 activation,
                  output_dim=1,
                  use_gpu=True) -> None:
         super().__init__(loss_fn, use_gpu)
         self.model = XXXPlus(user_params, item_params, in_size, output_size,
-                             blocks_size, deepths, output_dim)
+                             blocks_size, deepths, activation, output_dim)
 
         self.name = __class__.__name__
 

@@ -19,7 +19,6 @@ def train_single_epoch_with_dataloader(model, device, dataloader: DataLoader,
     for batch_id, batch in enumerate(dataloader):
         user, item, rating = batch[0].to(device), batch[1].to(
             device), batch[2].to(device)
-
         y_real = rating.reshape(-1, 1)
         opt.zero_grad()
         y_pred = model(user, item)

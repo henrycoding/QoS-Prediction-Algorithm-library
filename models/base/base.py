@@ -1,16 +1,18 @@
 import os
 import time
+
 import torch
-from torch.utils.tensorboard import SummaryWriter
+from root import absolute
 from tensorboard import program
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from root import absolute
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import load_checkpoint, save_checkpoint
 from utils.mylogger import TNLog
 
-from .utils import train_single_epoch_with_dataloader, train_mult_epochs_with_dataloader
+from .utils import (train_mult_epochs_with_dataloader,
+                    train_single_epoch_with_dataloader)
 
 
 class ModelBase(object):
@@ -18,7 +20,8 @@ class ModelBase(object):
         super().__init__()
         self.loss_fn = loss_fn  # 损失函数
         self.optimizer = None
-        self.device = ("cuda" if (use_gpu and torch.cuda.is_available()) else "cpu")
+        self.device = ("cuda" if
+                       (use_gpu and torch.cuda.is_available()) else "cpu")
         self.name = self.__class__.__name__
         self.logger = TNLog(self.name)  # 日志
         self.logger.initial_logger()
@@ -38,7 +41,14 @@ class ModelBase(object):
         # tensorboard.configure(argv=[None, '--logdir', save_dir])
         # tensorboard.launch()
 
-    def fit(self, train_loader, epochs, optimizer, eval_=True, eval_loader=None, save_model=True, save_filename=""):
+    def fit(self,
+            train_loader,
+            epochs,
+            optimizer,
+            eval_=True,
+            eval_loader=None,
+            save_model=True,
+            save_filename=""):
         """Eval为True: 自动保存最优模型（推荐）, save_model为True: 间隔epoch后自动保存模型
 
         Args:
@@ -63,7 +73,10 @@ class ModelBase(object):
             eval_total_loss = 0
             for batch_id, batch in enumerate(train_loader):
 
-                users, items, ratings = batch[0].to(self.device), batch[1].to(self.device), batch[2].to(self.device)
+                users, items, ratings = batch[0].to(self.device), batch[1].to(
+                    self.device), batch[2].to(self.device)
+                print(users.shape)
+                raise Exception
                 y_real = ratings.reshape(-1, 1)
                 self.optimizer.zero_grad()
                 y_pred = self.model(users, items)
@@ -77,7 +90,9 @@ class ModelBase(object):
             loss_per_epoch = train_batch_loss / len(train_loader)
             train_loss_list.append(loss_per_epoch)
 
-            self.logger.info(f"Training Epoch:[{epoch + 1}/{epochs}] Loss:{loss_per_epoch:.4f}")
+            self.logger.info(
+                f"Training Epoch:[{epoch + 1}/{epochs}] Loss:{loss_per_epoch:.4f}"
+            )
             self.writer.add_scalar("Training Loss", loss_per_epoch, epoch + 1)
 
             # 验证
@@ -106,7 +121,8 @@ class ModelBase(object):
                             is_best = False
                         eval_loss_list.append(loss_per_epoch)
                         self.logger.info(f"Test loss: {loss_per_epoch}")
-                        self.writer.add_scalar("Eval loss", loss_per_epoch, epoch)
+                        self.writer.add_scalar("Eval loss", loss_per_epoch,
+                                               epoch)
                         # 保存最优的loss
                         if is_best:
                             ckpt = {
@@ -117,8 +133,10 @@ class ModelBase(object):
                             }
                         # else:
                         #     ckpt = {}
-                        save_checkpoint(ckpt, is_best, f"output/{self.name}/{self.date}/saved_model",
-                                        f"{save_filename}_loss_{best_loss:.4f}.ckpt")
+                        save_checkpoint(
+                            ckpt, is_best,
+                            f"output/{self.name}/{self.date}/saved_model",
+                            f"{save_filename}_loss_{best_loss:.4f}.ckpt")
                         self.saved_model_ckpt.append(ckpt)
 
                 elif save_model:
@@ -128,8 +146,10 @@ class ModelBase(object):
                         "optim": optimizer.state_dict(),
                         "best_loss": loss_per_epoch
                     }
-                    save_checkpoint(ckpt, save_model, f"output/{self.name}/{self.date}/saved_model",
-                                    f"{save_filename}_loss_{loss_per_epoch:.4f}.ckpt")
+                    save_checkpoint(
+                        ckpt, save_model,
+                        f"output/{self.name}/{self.date}/saved_model",
+                        f"{save_filename}_loss_{loss_per_epoch:.4f}.ckpt")
                     self.saved_model_ckpt.append(ckpt)
 
     def predict(self, test_loader, resume=False, path=None):
@@ -150,10 +170,13 @@ class ModelBase(object):
             if path:
                 ckpt = load_checkpoint(path)
             else:
-                models = sorted(self.saved_model_ckpt, key=lambda x: x['best_loss'])
+                models = sorted(self.saved_model_ckpt,
+                                key=lambda x: x['best_loss'])
                 ckpt = models[0]
             self.model.load_state_dict(ckpt['model'])
-            self.logger.info(f"last checkpoint restored! ckpt: loss {ckpt['best_loss']:.4f} Epoch {ckpt['epoch']}")
+            self.logger.info(
+                f"last checkpoint restored! ckpt: loss {ckpt['best_loss']:.4f} Epoch {ckpt['epoch']}"
+            )
 
         self.model.to(self.device)
         self.model.eval()
@@ -170,7 +193,8 @@ class ModelBase(object):
                 y_pred_list.append(y_pred)
                 y_list.append(y_real)
 
-        return torch.cat(y_list).cpu().numpy(), torch.cat(y_pred_list).cpu().numpy()
+        return torch.cat(y_list).cpu().numpy(), torch.cat(
+            y_pred_list).cpu().numpy()
 
 
 class MemoryBase(object):

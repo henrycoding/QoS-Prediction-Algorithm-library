@@ -46,7 +46,8 @@ class DatasetBase(object):
         super().__init__()
 
         self.type = type_
-        assert self.type in ["rt", "tp", "user", "service"], f"类型不符，请在{['rt', 'tp', 'user', 'service']}中选择"
+        assert self.type in ["rt", "tp", "user", "service"
+                             ], f"类型不符，请在{['rt', 'tp', 'user', 'service']}中选择"
 
     def get_row_data(self):
         if self.type == "rt":

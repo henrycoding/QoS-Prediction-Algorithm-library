@@ -8,14 +8,22 @@ from models.XXXPlus.model import XXXPlus
 from models.XXXPlus.resnet_utils import ResNetBasicBlock
 from torch import nn, optim
 from torch.nn.modules import loss
-from torch.optim import Adam, optimizer
+from torch.optim import SGD, Adam, optimizer
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from utils.decorator import timeit
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import count_parameters, freeze_random
 
-from .model import XXXPlusModel
+from .model import FedXXXLaunch, XXXPlusModel
+"""
+model = XXXPlusModel(user_params, item_params, 48, 128, [128, 64, 32],
+                [4, 4], loss_fn, activation)
+opt = Adam(model.parameters(), lr=0.0005)
+
+
+20
+"""
 
 epochs = 3000
 desnity = 0.05
@@ -65,19 +73,31 @@ item_params = {
     "embedding_dims": [8, 8, 8],
 }
 
-train_data = data_preprocess(train, u_info, i_info)
-test_data = data_preprocess(test, u_info, i_info)
-train_dataset = ToTorchDataset(train_data)
-test_dataset = ToTorchDataset(test_data)
-train_dataloader = DataLoader(train_dataset, batch_size=128)
-test_dataloader = DataLoader(test_dataset, batch_size=2048)
+fed_data_preprocess = partial(data_preprocess, is_dtriad=True)
 
-model = XXXPlusModel(user_params, item_params, 48, 128, [128, 64, 32],
-                    [3, 3], loss_fn, activation)
-opt = Adam(model.parameters(), lr=0.0005,weight_decay=0.001)
+train_data = fed_data_preprocess(train, u_info, i_info)
+test_data = fed_data_preprocess(test, u_info, i_info)
+
+# train_data = data_preprocess(train, u_info, i_info)
+# test_data = data_preprocess(test, u_info, i_info)
+# train_dataset = ToTorchDataset(train_data)
+# test_dataset = ToTorchDataset(test_data)
+# train_dataloader = DataLoader(train_dataset, batch_size=128)
+# test_dataloader = DataLoader(test_dataset, batch_size=2048)
+
+model = FedXXXLaunch(user_params, item_params, 48, 128, [256, 128, 64, 32], -1,
+                     [3, 4, 4], activation, train_data, loss_fn, 5, 1)
+
+model.fit(epochs, 0.0005, test_data, 1)
+
+# model = XXXPlusModel(user_params, item_params, 48, 128, [128, 64, 32], [4, 4],
+#                      loss_fn, activation)
+# opt = Adam(model.parameters(), lr=0.0005)
+# opt = SGD(model.parameters(), lr=0.01)
+
 print(f"模型参数:", count_parameters(model))
-model.fit(train_dataloader,
-          epochs,
-          opt,
-          eval_loader=test_dataloader,
-          save_filename=f"{desnity}_{type_}")
+# model.fit(train_dataloader,
+#           epochs,
+#           opt,
+#           eval_loader=test_dataloader,
+#           save_filename=f"{desnity}_{type_}")

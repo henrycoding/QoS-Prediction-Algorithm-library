@@ -171,7 +171,7 @@ else:
                          optimizer="adam")
 
     print(f"模型参数:", count_parameters(model))
-    # model.fit(epochs, lr=0.0005, test_d_triad=test_data, fraction=1,save_filename=f"{desnity}_{type_}")
+    model.fit(epochs, lr=0.0005, test_d_triad=test_data, fraction=1,save_filename=f"{desnity}_{type_}")
     y, y_pred = model.predict(
         test_data,
         similarity_th=0.95,

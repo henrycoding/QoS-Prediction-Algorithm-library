@@ -19,7 +19,6 @@ class Embedding(nn.Module):
         ])
 
     def forward(self, indexes):
-
         if self.type == "stack":
             assert len(set(
                 self.embedding_dims)) == 1, f"dims should be the same"
@@ -82,8 +81,8 @@ class SingleEncoder_v2(nn.Module):
 
         # resnet encoder
 
-        self.resnet_encoder = ResNetEncoder_v2(output_size, blocks_sizes, deepths,
-                                            activation, block)
+        self.resnet_encoder = ResNetEncoder_v2(output_size, blocks_sizes,
+                                               deepths, activation, block)
 
     def forward(self, indexes: list):
         x = self.embedding(indexes)

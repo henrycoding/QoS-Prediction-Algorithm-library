@@ -88,7 +88,7 @@ test_data = fed_data_preprocess(test, u_info, i_info)
 
 model = FedXXXLaunch(user_params, item_params, 48, 128, [128, 64, 32], -1,
                      [4, 4], activation, train_data, loss_fn, 5,
-                     [176, 128, 64], 1)
+                     [160, 128, 64], 1)
 print(f"模型参数:", count_parameters(model))
 
 model.fit(epochs, 0.0005, test_data, 1)

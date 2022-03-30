@@ -49,8 +49,7 @@ class XXXPlus(nn.Module):
         ])
 
         # output
-        self.output_layers = nn.Linear(output_size + blocks_size[-1],
-                                       output_dim)
+        self.output_layers = nn.Linear(linear_layers[-1], output_dim)
 
     def forward(self, user_idxes: list, item_idxes: list):
         user_embedding = self.user_embedding(user_idxes)

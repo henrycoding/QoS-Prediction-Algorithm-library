@@ -44,7 +44,7 @@ class ResNetResidualBlock(ResidualBlock):
         self.shortcut = nn.Sequential(
             OrderedDict({
                 'dense': nn.Linear(self.in_size, self.out_size),
-                'dropout': nn.Dropout(0.5)
+                'dropout': nn.Dropout(0.3)
                 # 'bn': nn.BatchNorm1d(self.out_size)
             })) if self.should_apply_shortcut else None
 

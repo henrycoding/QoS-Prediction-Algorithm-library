@@ -140,8 +140,7 @@ class FedXXXLaunch(FedModelBase):
         is_best = False
         for epoch in tqdm(range(epochs),
                           desc="Traing Epochs ",
-                          position=0,
-                          leave=True,
+                          ncols=80,
                           colour="green"):
 
             # 0. Get params from server
@@ -219,7 +218,7 @@ class FedXXXLaunch(FedModelBase):
         self._model.eval()
         with torch.no_grad():
             # for batch_id, batch in tqdm(enumerate(test_loader)):
-            for batch_id, batch in tqdm(enumerate(p_triad_dataloader),
+            for batch_id, batch in tqdm(enumerate(p_triad_dataloader),ncols=80,
                                         desc="Model Predict"):
                 user, item, rate = batch[0].to(self.device), batch[1].to(
                     self.device), batch[2].to(self.device)

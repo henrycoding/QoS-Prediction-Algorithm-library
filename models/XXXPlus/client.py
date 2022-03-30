@@ -66,8 +66,7 @@ class Clients(object):
             r[uid].append(p_triad_row)
         for uid, rows in tqdm(r.items(),
                               desc="Building clients...",
-                              position=0,
-                              leave=True):
+                              ncols=80):
             self.clients_map[uid] = Client(rows,
                                            uid,
                                            self.device,

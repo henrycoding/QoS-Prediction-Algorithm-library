@@ -38,7 +38,7 @@ def data_preprocess(triad,
     生成d_triad [[triad],[p_triad]]
     """
     r = []
-    for row in tqdm(triad, desc="Gen d_triad",position=0,leave=True):
+    for row in tqdm(triad, desc="Gen d_triad", ncols=80):
         uid, iid, rate = int(row[0]), int(row[1]), float(row[2])
         u = u_info_obj.query(uid)
         i = i_info_obj.query(iid)

@@ -64,7 +64,10 @@ class Clients(object):
             uid, iid, rate = int(triad_row[0]), int(triad_row[1]), float(
                 triad_row[2])
             r[uid].append(p_triad_row)
-        for uid, rows in tqdm(r.items(), desc="Building clients..."):
+        for uid, rows in tqdm(r.items(),
+                              desc="Building clients...",
+                              position=0,
+                              leave=True):
             self.clients_map[uid] = Client(rows,
                                            uid,
                                            self.device,

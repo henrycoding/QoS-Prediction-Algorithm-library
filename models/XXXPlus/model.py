@@ -139,7 +139,11 @@ class FedXXXLaunch(FedModelBase):
     def fit(self, epochs, lr, test_d_triad, fraction=1, save_filename=""):
         best_train_loss = None
         is_best = False
-        for epoch in tqdm(range(epochs), desc="Traing Epochs "):
+        for epoch in tqdm(range(epochs),
+                          desc="Traing Epochs ",
+                          position=0,
+                          leave=True,
+                          colour="green"):
 
             # 0. Get params from server
             s_params = self.server.params if epoch != 0 else self._model.state_dict(

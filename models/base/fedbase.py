@@ -107,7 +107,7 @@ class FedModelBase(object):
         client_loss = []
         selected_total_size = 0  # client数据集总数
 
-        for uid in tqdm(sampled_client_indices, desc="Client training"):
+        for uid in tqdm(sampled_client_indices, desc="Client training",colour="green",ncols=80):
             s_params, loss = self.clients[uid].fit(s_params, self.loss_fn,
                                                    self.optimizer, lr)
             collector.append(s_params)

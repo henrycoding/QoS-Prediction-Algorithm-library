@@ -44,7 +44,7 @@ class TNLog(object):
             #     path, "midnight", backupCount=self.__backupCount, encoding='utf-8')
             handlers[level] = RotatingFileHandler(
                 path,
-                maxBytes=1024 * 100,
+                maxBytes=1024 * 1024 * 2,
                 backupCount=self.__backupCount,
                 encoding='utf-8')
             logger = logging.getLogger(self.__logger_name + "_" + str(level))

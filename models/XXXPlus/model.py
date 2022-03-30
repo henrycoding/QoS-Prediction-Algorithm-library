@@ -24,6 +24,7 @@ class XXXPlus(nn.Module):
                  blocks_size,
                  deepths,
                  activation,
+                 linear_layers=[128, 64, 32],
                  output_dim=1) -> None:
         super().__init__()
 
@@ -42,10 +43,10 @@ class XXXPlus(nn.Module):
             activation=activation)
 
         # decoder
-        # self.fc_layers = nn.Sequential(*[
-        #     Linear(in_size, out_size, activation)
-        #     for in_size, out_size in zip(linear_layers, linear_layers[1:])
-        # ])
+        self.fc_layers = nn.Sequential(*[
+            Linear(in_size, out_size, activation)
+            for in_size, out_size in zip(linear_layers, linear_layers[1:])
+        ])
 
         # output
         self.output_layers = nn.Linear(output_size + blocks_size[-1],
@@ -58,6 +59,7 @@ class XXXPlus(nn.Module):
         x1, y = self.decrease_encoder(x)
         x2 = self.increase_encoder(x1, y)
         x = torch.cat([x1, x2], dim=-1)
+        x = self.fc_layers(x)
         x = self.output_layers(x)
         return x
 

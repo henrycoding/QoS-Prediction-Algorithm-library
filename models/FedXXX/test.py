@@ -39,10 +39,12 @@ Density:0.2,type:rt,mae:0.28451427817344666,mse:1.2856311798095703,rmse:1.133856
 # non-fed 0.05 0.1 0.15 2
 # fed 0.1 0.15 2
 
+# 降低参数
+# 降低最后连接层的参数
 IS_FED = True
 
 epochs = 3000
-desnity = 0.1
+desnity = 0.05
 type_ = "rt"
 
 u_enable_columns = ["[User ID]", "[Country]", "[AS]"]
@@ -75,35 +77,13 @@ train, test = md.split_train_test(desnity)
 # loss_fn = nn.SmoothL1Loss()
 loss_fn = nn.L1Loss()
 
-user_params = {
-    "type_": "cat",  # embedding层整合方式 stack or cat
-    "embedding_nums": u_info.embedding_nums,  # 每个要embedding的特征的总个数
-    "embedding_dims": [16, 16, 16],
-    "in_size": 48,  # embedding后接一个全连阶层在进入resnet
-    "blocks_sizes": [64, 128, 64, 32],  # 最后的输出是8
-    "deepths": [2, 2, 2],
-    "activation": nn.GELU,
-    "block": ResNetBasicBlock
-}
-
-item_params = {
-    "type_": "cat",  # embedding层整合方式 stack or cat
-    "embedding_nums": i_info.embedding_nums,  # 每个要embedding的特征的总个数
-    "embedding_dims": [16, 16, 16],
-    "in_size": 48,
-    "blocks_sizes": [64, 128, 64, 32],  # item最后的输出是8
-    "deepths": [2, 2, 2],
-    "activation": nn.GELU,
-    "block": ResNetBasicBlock
-}
-
 # user_params = {
 #     "type_": "cat",  # embedding层整合方式 stack or cat
 #     "embedding_nums": u_info.embedding_nums,  # 每个要embedding的特征的总个数
-#     "embedding_dims": [8, 8,8],
-#     "in_size": 24,  # embedding后接一个全连阶层在进入resnet
-#     "blocks_sizes": [128,32, 12],  # 最后的输出是8
-#     "deepths": [3,2],
+#     "embedding_dims": [16, 16, 16],
+#     "in_size": 48,  # embedding后接一个全连阶层在进入resnet
+#     "blocks_sizes": [64, 128, 64, 32],  # 最后的输出是8
+#     "deepths": [2, 2, 2],
 #     "activation": nn.GELU,
 #     "block": ResNetBasicBlock
 # }
@@ -111,13 +91,35 @@ item_params = {
 # item_params = {
 #     "type_": "cat",  # embedding层整合方式 stack or cat
 #     "embedding_nums": i_info.embedding_nums,  # 每个要embedding的特征的总个数
-#     "embedding_dims": [8, 8,8],
-#     "in_size": 24,
-#     "blocks_sizes": [128,32,12],  # item最后的输出是8
-#     "deepths": [3,2],
+#     "embedding_dims": [16, 16, 16],
+#     "in_size": 48,
+#     "blocks_sizes": [64, 128, 64, 32],  # item最后的输出是8
+#     "deepths": [2, 2, 2],
 #     "activation": nn.GELU,
 #     "block": ResNetBasicBlock
 # }
+
+user_params = {
+    "type_": "cat",  # embedding层整合方式 stack or cat
+    "embedding_nums": u_info.embedding_nums,  # 每个要embedding的特征的总个数
+    "embedding_dims": [8, 8,8],
+    "in_size": 24,  # embedding后接一个全连阶层在进入resnet
+    "blocks_sizes": [128,32, 12],  # 最后的输出是8
+    "deepths": [3,2],
+    "activation": nn.GELU,
+    "block": ResNetBasicBlock
+}
+
+item_params = {
+    "type_": "cat",  # embedding层整合方式 stack or cat
+    "embedding_nums": i_info.embedding_nums,  # 每个要embedding的特征的总个数
+    "embedding_dims": [8, 8,8],
+    "in_size": 24,
+    "blocks_sizes": [128,32,12],  # item最后的输出是8
+    "deepths": [3,2],
+    "activation": nn.GELU,
+    "block": ResNetBasicBlock
+}
 
 
 def _check_params(params):
@@ -164,7 +166,7 @@ else:
     test_data = fed_data_preprocess(test, u_info, i_info)
     model = FedXXXLaunch(train_data,
                          user_params,
-                         item_params, [64, 512, 128, 24],
+                         item_params, [24],
                          loss_fn,
                          1,
                          nn.GELU,
@@ -172,16 +174,16 @@ else:
 
     print(f"模型参数:", count_parameters(model))
     model.fit(epochs, lr=0.0005, test_d_triad=test_data, fraction=1,save_filename=f"{desnity}_{type_}")
-    y, y_pred = model.predict(
-        test_data,
-        similarity_th=0.95,
-        w=0.95,
-        use_similarity=False,
-        resume=True,
-        path=
-        "D:\yuwenzhuo\QoS-Predcition-Algorithm-library\output\FedXXXLaunch\loss_0.05_rt_0.2404.ckpt"
-    )
-    mae_ = mae(y, y_pred)
-    mse_ = mse(y, y_pred)
-    rmse_ = rmse(y, y_pred)
-    print(f"Density:{desnity},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")
+    # y, y_pred = model.predict(
+    #     test_data,
+    #     similarity_th=0.95,
+    #     w=0.95,
+    #     use_similarity=False,
+    #     resume=True,
+    #     path=
+    #     "D:\yuwenzhuo\QoS-Predcition-Algorithm-library\output\FedXXXLaunch\loss_0.05_rt_0.2404.ckpt"
+    # )
+    # mae_ = mae(y, y_pred)
+    # mse_ = mse(y, y_pred)
+    # rmse_ = rmse(y, y_pred)
+    # print(f"Density:{desnity},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")

@@ -34,7 +34,8 @@ def data_preprocess(triad,
                     u_info_obj: InfoDataset,
                     i_info_obj: InfoDataset,
                     is_dtriad=False):
-    """生成d_triad [[triad],[p_triad]]
+    """解决uid和embedding时的id不一致的问题
+    生成d_triad [[triad],[p_triad]]
     """
     r = []
     for row in tqdm(triad, desc="Gen d_triad"):
@@ -85,8 +86,9 @@ test_data = fed_data_preprocess(test, u_info, i_info)
 # train_dataloader = DataLoader(train_dataset, batch_size=128)
 # test_dataloader = DataLoader(test_dataset, batch_size=2048)
 
-model = FedXXXLaunch(user_params, item_params, 48, 128, [256, 128, 64, 32], -1,
-                     [3, 4, 4], activation, train_data, loss_fn, 5, 1)
+model = FedXXXLaunch(user_params, item_params, 48, 128, [128, 64, 32], -1,
+                     [4, 4], activation, train_data, loss_fn, 5, 1)
+print(f"模型参数:", count_parameters(model))
 
 model.fit(epochs, 0.0005, test_data, 1)
 
@@ -95,7 +97,6 @@ model.fit(epochs, 0.0005, test_data, 1)
 # opt = Adam(model.parameters(), lr=0.0005)
 # opt = SGD(model.parameters(), lr=0.01)
 
-print(f"模型参数:", count_parameters(model))
 # model.fit(train_dataloader,
 #           epochs,
 #           opt,

@@ -4,6 +4,17 @@ from collections import OrderedDict
 from torch import nn
 
 
+class Linear(nn.Module):
+    def __init__(self, in_size, out_size, activation):
+        super().__init__()
+        self.fc_layer = nn.Sequential(nn.Linear(in_size, out_size),
+                                      activation())
+
+    def forward(self, x):
+        x = self.fc_layer(x)
+        return x
+
+
 class ResidualBlock(nn.Module):
     def __init__(self, in_size, out_size, addition=None):
         super().__init__()

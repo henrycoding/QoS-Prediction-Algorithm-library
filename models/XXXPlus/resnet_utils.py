@@ -36,8 +36,6 @@ class ResidualBlock(nn.Module):
 
 
 # 用来处理short cut
-
-
 class ResNetResidualBlock(ResidualBlock):
     def __init__(self, in_size, out_size):
         super().__init__(in_size, out_size)
@@ -61,13 +59,13 @@ class ResNetBasicBlock(ResNetResidualBlock):
         super().__init__(in_size, out_size)
         self.blocks = nn.Sequential(
             nn.Linear(self.in_size, self.out_size),
-            nn.Dropout(0.5),
             activation(),
+            nn.Dropout(0.5),
             nn.Linear(self.out_size, self.out_size),
         )
 
 
-# 定义一个resnet层，里面会有多个block
+# 定义一个resnet layer层，里面会有多个block
 class ResNetLayer(nn.Module):
     """对于[128,64] n=2时 返回 128x64, 64x64
     """
@@ -122,9 +120,9 @@ class ResNetEncoder(nn.Module):
 
         self.gate = nn.Sequential(
             nn.Linear(in_size, self.blocks_sizes[0]),
-            nn.Dropout(0.5),
             # nn.BatchNorm1d(self.blocks_sizes[0]),
             activation(),
+            nn.Dropout(0.5),
         )
 
         self.in_out_block_sizes = list(zip(blocks_sizes, blocks_sizes[1:]))
@@ -145,7 +143,6 @@ class ResNetEncoder(nn.Module):
         for block in self.blocks:
             x = block(x)
             accessories.append(x)
-            x = nn.Dropout(0.5)(x)
         return x, accessories
 
 
@@ -175,7 +172,8 @@ class ResNetEncoder_v2(nn.Module):
         ])
 
         self.gate = nn.Sequential(
-            nn.Linear(self.blocks_sizes[-1], output_size), nn.Dropout(0.5))
+            nn.Linear(self.blocks_sizes[-1], output_size), activation(),
+            nn.Dropout(0.5))
 
     def forward(self, x, accessories: list):
         for idx, block in enumerate(self.blocks):
@@ -183,7 +181,6 @@ class ResNetEncoder_v2(nn.Module):
                 assert x.shape == accessories[-idx - 1].shape
                 x += accessories[-idx - 1]
             x = block(x)
-            x = nn.Dropout(0.5)(x)
         x = self.gate(x)
         return x
 

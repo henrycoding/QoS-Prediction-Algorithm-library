@@ -76,11 +76,13 @@ class XXXPlusModel(ModelBase):
                  deepths,
                  loss_fn,
                  activation,
+                 linear_layers,
                  output_dim=1,
                  use_gpu=True) -> None:
         super().__init__(loss_fn, use_gpu)
         self.model = XXXPlus(user_params, item_params, in_size, output_size,
-                             blocks_size, deepths, activation, output_dim)
+                             blocks_size, deepths, activation, linear_layers,
+                             output_dim)
 
         self.name = __class__.__name__
 
@@ -110,6 +112,7 @@ class FedXXXLaunch(FedModelBase):
                  d_triad,
                  loss_fn,
                  local_epoch,
+                 linear_layers,
                  output_dim=1,
                  optimizer="adam",
                  use_gpu=True) -> None:
@@ -123,6 +126,7 @@ class FedXXXLaunch(FedModelBase):
                               blocks_size,
                               deepths,
                               activation,
+                              linear_layers,
                               output_dim=output_dim)
         self.server = Server()
         self.clients = Clients(d_triad, self._model, self.device, batch_size,

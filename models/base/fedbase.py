@@ -19,7 +19,6 @@ class ClientBase(object):
 
     def fit(self, params, loss_fn, optimizer: str, lr, epochs=5):
         self.model.load_state_dict(params)
-        self.model.train()
         self.model.to(self.device)
         opt = use_optimizer(self.model, optimizer, lr)
         loss, lis = train_mult_epochs_with_dataloader(

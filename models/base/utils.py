@@ -15,6 +15,7 @@ def train_single_epoch_with_dataloader(model, device, dataloader: DataLoader,
 
     Returns: 返回一个epoch产生的loss,np.float64类型
     """
+    model.train()
     loss_per_epoch = []
     for batch_id, batch in enumerate(dataloader):
         user, item, rating = batch[0].to(device), batch[1].to(

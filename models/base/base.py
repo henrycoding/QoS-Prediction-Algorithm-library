@@ -60,7 +60,6 @@ class ModelBase(object):
             save_model :  是否保存模型 Defaults to True.
             save_filename :  保存的模型的名字 Defaults to "".
         """
-        self.model.train()
         self.model.to(self.device)
         train_loss_list = []
         eval_loss_list = []
@@ -69,14 +68,14 @@ class ModelBase(object):
 
         # 训练
         for epoch in tqdm(range(epochs)):
+            self.model.train()
+
             train_batch_loss = 0
             eval_total_loss = 0
             for batch_id, batch in enumerate(train_loader):
 
                 users, items, ratings = batch[0].to(self.device), batch[1].to(
                     self.device), batch[2].to(self.device)
-                print(users.shape)
-                raise Exception
                 y_real = ratings.reshape(-1, 1)
                 self.optimizer.zero_grad()
                 y_pred = self.model(users, items)

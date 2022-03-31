@@ -51,11 +51,11 @@ for density in [0.05, 0.10, 0.15, 0.20]:
     #
     # logger.info(f"Density:{density},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")
 
-def predict():
-    y, y_pred = mlp.predict(test_dataloader, True,
-                            "/Users/wenzhuo/Desktop/研究生/科研/QoS预测实验代码/SCDM/output/FedMLPModel/loss_0.4504.ckpt")
-    mae_ = mae(y, y_pred)
-    mse_ = mse(y, y_pred)
-    rmse_ = rmse(y, y_pred)
+# def predict():
+#     y, y_pred = mlp.predict(test_dataloader, True,
+#                             "/Users/wenzhuo/Desktop/研究生/科研/QoS预测实验代码/SCDM/output/FedMLPModel/loss_0.4504.ckpt")
+#     mae_ = mae(y, y_pred)
+#     mse_ = mse(y, y_pred)
+#     rmse_ = rmse(y, y_pred)
 
-    logger.info(f"Density:{density},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")
+#     logger.info(f"Density:{density},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")

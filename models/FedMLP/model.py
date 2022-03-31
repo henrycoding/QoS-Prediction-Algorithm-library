@@ -1,3 +1,4 @@
+from typing import OrderedDict
 import torch
 from models.base import FedModelBase
 from torch import nn
@@ -42,6 +43,10 @@ class FedMLP(nn.Module):
         for in_size, out_size in zip(layers, layers[1:]):
             self.fc_layers.append(nn.Linear(in_size, out_size))
 
+        self.my_layer = nn.Sequential(OrderedDict({
+            "my_layer":nn.Linear(layers[-1],layers[-1])
+        }))
+        
         self.fc_output = nn.Linear(layers[-1], output_dim)
 
     def forward(self, user_idx, item_idx):
@@ -51,6 +56,7 @@ class FedMLP(nn.Module):
         for fc_layer in self.fc_layers:
             x = fc_layer(x)
             x = nn.ReLU()(x)
+        x = self.my_layer(x)
         x = self.fc_output(x)
         return x
 

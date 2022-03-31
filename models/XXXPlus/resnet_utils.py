@@ -5,10 +5,20 @@ from torch import nn
 
 
 class Linear(nn.Module):
-    def __init__(self, in_size, out_size, activation):
+    def __init__(self, in_size, out_size, activation, personal_layer_name=None):
         super().__init__()
-        self.fc_layer = nn.Sequential(nn.Linear(in_size, out_size),
-                                      activation())
+        if personal_layer_name is None:
+            self.fc_layer = nn.Sequential(nn.Linear(in_size, out_size),
+                                        activation())
+        else:
+            self.fc_layer = nn.Sequential(
+                OrderedDict({
+                    personal_layer_name:nn.Linear(in_size, out_size),
+                    "activation":activation()
+
+                })
+            )        
+                
 
     def forward(self, x):
         x = self.fc_layer(x)

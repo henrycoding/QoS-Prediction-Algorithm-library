@@ -17,6 +17,7 @@ class Client(ClientBase):
     """
     def __init__(self,
                  triad,
+                 test_triad,
                  uid,
                  device,
                  model,
@@ -24,10 +25,18 @@ class Client(ClientBase):
                  local_epochs=5) -> None:
         super().__init__(device, model)
         self.triad = triad
+        self.test_triad = test_triad
         self.uid = uid
         self.n_item = len(triad)
         self.local_epochs = local_epochs
         self.batch_size = self.n_item if batch_size == -1 else batch_size
+
+
+        # 每一个节点要有测试集和训练集
+        self.test_data_loader = DataLoader(ToTorchDataset(self.test_triad),
+                                      batch_size=len(test_triad),
+                                      drop_last=True)
+
         self.data_loader = DataLoader(ToTorchDataset(self.triad),
                                       batch_size=self.batch_size,
                                       drop_last=True)

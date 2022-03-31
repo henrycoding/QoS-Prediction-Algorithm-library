@@ -24,6 +24,7 @@ class XXXPlus(nn.Module):
                  blocks_size,
                  deepths,
                  activation,
+                 personal_layer="my_layer",
                  linear_layers=[128, 64, 32],
                  output_dim=1) -> None:
         super().__init__()
@@ -44,8 +45,8 @@ class XXXPlus(nn.Module):
 
         # decoder
         self.fc_layers = nn.Sequential(*[
-            Linear(in_size, out_size, activation)
-            for in_size, out_size in zip(linear_layers, linear_layers[1:])
+            Linear(in_size, out_size, activation,personal_layer+f"_{idx}")
+            for idx, (in_size, out_size) in enumerate(zip(linear_layers, linear_layers[1:]))
         ])
 
         # output
@@ -112,6 +113,7 @@ class FedXXXLaunch(FedModelBase):
                  loss_fn,
                  local_epoch,
                  linear_layers,
+                 personal_layer,
                  output_dim=1,
                  optimizer="adam",
                  use_gpu=True) -> None:
@@ -126,14 +128,17 @@ class FedXXXLaunch(FedModelBase):
                               deepths,
                               activation,
                               linear_layers,
+                              personal_layer=personal_layer,
                               output_dim=output_dim)
         self.server = Server()
         self.clients = Clients(d_triad, self._model, self.device, batch_size,
                                local_epoch)
         self.optimizer = optimizer
         self.loss_fn = loss_fn
+        self.personal_layer = personal_layer
         self.logger = TNLog(self.name)
         self.logger.initial_logger()
+
 
     def fit(self, epochs, lr, test_d_triad, fraction=1, save_filename=""):
         best_train_loss = None
@@ -159,9 +164,9 @@ class FedXXXLaunch(FedModelBase):
                 for idx in sampled_client_indices
             ]
             self._check(mixing_coefficients)
-            # self.server.upgrade_wich_cefficients(collector,
-            #                                      mixing_coefficients)
-            self.server.upgrade_average(collector)
+            self.server.upgrade_wich_cefficients(collector,
+                                                 mixing_coefficients)
+            # self.server.upgrade_average(collector)
 
             # 3. 服务端根据参数更新模型
             self.logger.info(

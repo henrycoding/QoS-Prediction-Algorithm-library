@@ -3,6 +3,8 @@ from collections import OrderedDict, defaultdict
 from typing import Dict, List
 
 import numpy as np
+import torch
+from sympy import EX
 from tqdm import tqdm
 
 from utils.model_util import use_optimizer
@@ -15,9 +17,16 @@ class ClientBase(object):
         self.device = device
         self.model = model
         self.data_loader = None
+        self.test_data_loader = None
         super().__init__()
 
     def fit(self, params, loss_fn, optimizer: str, lr, epochs=5):
+
+        # 用本地模型的参数替换服务端的模型
+        for name, param in self.model.named_parameters():
+            if self.model.personal_layer in name:
+                params[name] = param
+
         self.model.load_state_dict(params)
         self.model.to(self.device)
         opt = use_optimizer(self.model, optimizer, lr)
@@ -30,6 +39,37 @@ class ClientBase(object):
             loss_fn=loss_fn)
         self.loss_list = [*lis]
         return self.model.state_dict(), round(loss, 4)
+
+    def predict(self, params, loss_fn, potimizer: str, lr):
+        # 用本地模型的参数替换服务端的模型
+        for name, param in self.model.named_parameters():
+            if self.model.personal_layer in name:
+                params[name] = param
+        self.model.load_state_dict(params)
+        self.model.to(self.device)
+        self.model.eval()
+        with torch.no_grad():
+            # for batch_id, batch in tqdm(enumerate(test_loader)):
+            for batch_id, batch in tqdm(enumerate(self.test_data_loader),
+                                        ncols=80,
+                                        desc="Model Predict"):
+                user, item, rate = batch[0].to(self.device), batch[1].to(
+                    self.device), batch[2].to(self.device)
+                y_pred = self.model(user, item).squeeze()
+                y_real = rate.reshape(-1, 1)
+
+                if len(y_pred.shape) == 0:  # 64一batch导致变成了标量
+                    y_pred = y_pred.unsqueeze(dim=0)
+                if len(y_real.shape) == 0:
+                    y_real = y_real.unsqueeze(dim=0)
+
+                y_pred_list.append(y_pred)
+                y_list.append(y_real)
+
+            y_pred_list = torch.cat(y_pred_list).cpu().numpy()
+            y_list = torch.cat(y_list).cpu().numpy()
+
+            return y_list, y_pred_list
 
 
 class ClientsBase(object):
@@ -72,29 +112,37 @@ class ServerBase(object):
     def __init__(self) -> None:
         super().__init__()
 
-    def upgrade_wich_cefficients(self, params: List[Dict], coefficients: Dict):
+    def upgrade_wich_cefficients(self, params: List[Dict], coefficients: Dict,
+                                 personal_layer_name: str):
         """使用加权平均对参数进行更新
 
         Args:
             params : 模型参数
             coefficients : 加权平均的系数
+
+        personal_layer_name 不聚合这些参数
         """
 
         o = OrderedDict()
         if len(params) != 0:
             # 获得不同的键
             for k, v in params[0].items():
+                if personal_layer_name in k:
+                    continue
                 for it, param in enumerate(params):
+
                     if it == 0:
                         o[k] = coefficients[it] * param[k]
                     else:
                         o[k] += coefficients[it] * param[k]
             self.params = o
 
-    def upgrade_average(self, params: List[Dict]):
+    def upgrade_average(self, params: List[Dict], personal_layer_name: str):
         o = OrderedDict()
         if len(params) != 0:
             for k, v in params[0].items():
+                if personal_layer_name in k:
+                    continue
                 o[k] = sum([i[k] for i in params]) / len(params)
             self.params = o
 
@@ -107,7 +155,10 @@ class FedModelBase(object):
         client_loss = []
         selected_total_size = 0  # client数据集总数
 
-        for uid in tqdm(sampled_client_indices, desc="Client training",colour="green",ncols=80):
+        for uid in tqdm(sampled_client_indices,
+                        desc="Client training",
+                        colour="green",
+                        ncols=80):
             s_params, loss = self.clients[uid].fit(s_params, self.loss_fn,
                                                    self.optimizer, lr)
             collector.append(s_params)

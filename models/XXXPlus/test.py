@@ -22,6 +22,12 @@ model = XXXPlusModel(user_params, item_params, 48, 128, [128, 64, 32],
 opt = Adam(model.parameters(), lr=0.0005)
 
 
+
+一套过拟合的参数
+model = FedXXXLaunch(user_params, item_params, 48, 128, [128,64,64,32,32], -1,
+                     [4,4,4,4], activation, train_data, loss_fn, 5,
+                     [160,128,64], 1)
+
 20
 """
 

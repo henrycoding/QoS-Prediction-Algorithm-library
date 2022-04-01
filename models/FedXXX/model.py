@@ -30,6 +30,7 @@ class FedXXX(nn.Module):
                  activation=nn.ReLU) -> None:
         super().__init__()
 
+        self.personal_layer = "xxxlllpppggg"
         # user
         self.user_encoder = SingleEncoder(**user_params)
 
@@ -133,9 +134,9 @@ class FedXXXLaunch(FedModelBase):
                 for idx in sampled_client_indices
             ]
             self._check(mixing_coefficients)
-            # self.server.upgrade_wich_cefficients(collector,
-            #                                      mixing_coefficients)
-            self.server.upgrade_average(collector)
+            self.server.upgrade_wich_cefficients(collector,
+                                                 mixing_coefficients,self._model.personal_layer)
+            # self.server.upgrade_average(collector)
 
             # 3. 服务端根据参数更新模型
             self.logger.info(

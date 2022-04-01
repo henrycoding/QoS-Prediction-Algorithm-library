@@ -40,7 +40,8 @@ class ClientBase(object):
         self.loss_list = [*lis]
         return self.model.state_dict(), round(loss, 4)
 
-    def predict(self, params, loss_fn, potimizer: str, lr):
+    def predict(self,params):
+
         # 用本地模型的参数替换服务端的模型
         for name, param in self.model.named_parameters():
             if self.model.personal_layer in name:
@@ -49,10 +50,10 @@ class ClientBase(object):
         self.model.to(self.device)
         self.model.eval()
         with torch.no_grad():
+            y_pred_list = []
+            y_list = []
             # for batch_id, batch in tqdm(enumerate(test_loader)):
-            for batch_id, batch in tqdm(enumerate(self.test_data_loader),
-                                        ncols=80,
-                                        desc="Model Predict"):
+            for batch_id, batch in enumerate(self.test_data_loader):
                 user, item, rate = batch[0].to(self.device), batch[1].to(
                     self.device), batch[2].to(self.device)
                 y_pred = self.model(user, item).squeeze()
@@ -128,6 +129,7 @@ class ServerBase(object):
             # 获得不同的键
             for k, v in params[0].items():
                 if personal_layer_name in k:
+                    print(k)
                     continue
                 for it, param in enumerate(params):
 
@@ -165,6 +167,18 @@ class FedModelBase(object):
             client_loss.append(loss)
             selected_total_size += self.clients[uid].n_item
         return collector, client_loss, selected_total_size
+
+    def evaluation_selected_clients(self, client_indices,params):
+        y_list = []
+        y_pred_list = []
+        for uid in tqdm(client_indices,
+                        desc="Client Evaluation",
+                        colour="green",
+                        ncols=80):
+            y, y_pred = self.clients[uid].predict(params)
+            y_list.extend(y)
+            y_pred_list.extend(y_pred)
+        return y_list, y_pred_list
 
     def _check(self, iterator):
         assert abs(sum(iterator) - 1) <= 1e-4

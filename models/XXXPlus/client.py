@@ -44,8 +44,11 @@ class Client(ClientBase):
                                        batch_size=1,
                                        drop_last=True)
 
-    def fit(self, params, loss_fn, optimizer: str, lr, epochs=5):
-        return super().fit(params, loss_fn, optimizer, lr, epochs=epochs)
+    def fit(self, params, loss_fn, optimizer: str, lr):
+        return super().fit(params, loss_fn, optimizer, lr, epochs=self.local_epochs)
+    
+    def predict(self,params):
+        return super().predict(params)
 
 
 class Clients(object):
@@ -53,12 +56,14 @@ class Clients(object):
     """
     def __init__(self,
                  d_triad,
+                 test_d_triad,
                  model,
                  device,
                  batch_size=-1,
                  local_epochs=5) -> None:
         super().__init__()
         self.triad, self.p_triad = split_d_triad(d_triad)
+        self.test_triad,self.test_p_triad = split_d_triad(test_d_triad)
         self.model = model
         self.device = device
         self.clients_map = {}  # 存储每个client的数据集
@@ -68,15 +73,25 @@ class Clients(object):
         self._get_clients()
 
     def _get_clients(self):
-        r = defaultdict(list)
+
+        train_data_dic = defaultdict(list)
         for triad_row, p_triad_row in zip(self.triad, self.p_triad):
             uid, iid, rate = int(triad_row[0]), int(triad_row[1]), float(
                 triad_row[2])
-            r[uid].append(p_triad_row)
-        for uid, rows in tqdm(r.items(),
+            train_data_dic[uid].append(p_triad_row)
+
+
+        test_data_dic = defaultdict(list)
+        for triad_row, p_triad_row in zip(self.test_triad, self.test_p_triad):
+            uid, iid, rate = int(triad_row[0]), int(triad_row[1]), float(
+                triad_row[2])
+            test_data_dic[uid].append(p_triad_row)
+
+        for uid, rows in tqdm(train_data_dic.items(),
                               desc="Building clients...",
                               ncols=80):
             self.clients_map[uid] = Client(rows,
+                                           test_data_dic[uid],
                                            uid,
                                            self.device,
                                            copy.deepcopy(self.model),

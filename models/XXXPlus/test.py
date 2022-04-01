@@ -16,6 +16,7 @@ from utils.evaluation import mae, mse, rmse
 from utils.model_util import count_parameters, freeze_random
 
 from .model import FedXXXLaunch, XXXPlusModel
+
 """
 model = XXXPlusModel(user_params, item_params, 48, 128, [128, 64, 32],
                 [4, 4], loss_fn, activation)
@@ -92,12 +93,12 @@ test_data = fed_data_preprocess(test, u_info, i_info)
 # train_dataloader = DataLoader(train_dataset, batch_size=128)
 # test_dataloader = DataLoader(test_dataset, batch_size=2048)
 
-model = FedXXXLaunch(user_params, item_params, 48, 128, [128, 64, 32], -1,
-                     [4, 4], activation, train_data, loss_fn, 5,
-                     [160, 128, 64], 1)
+model = FedXXXLaunch(user_params, item_params, 48, 128, [128,64,32], -1,
+                     [2,2], activation, train_data, test_data, loss_fn, 10,
+                     [160,128,64,32], "my_layer", 1)
 print(f"模型参数:", count_parameters(model))
 
-model.fit(epochs, 0.0005, test_data, 1)
+model.fit(epochs, 0.0005, 1)
 
 # model = XXXPlusModel(user_params, item_params, 48, 128, [128, 64, 32], [4, 4],
 #                      loss_fn, activation)

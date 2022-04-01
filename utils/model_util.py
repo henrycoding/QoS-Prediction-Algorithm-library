@@ -7,6 +7,7 @@ import numpy as np
 import torch
 from root import absolute
 from torch import nn
+
 """
     Some handy functions for model training ...
 """
@@ -99,7 +100,7 @@ def use_optimizer(network, opt, lr):
     if opt == 'sgd':
         optimizer = torch.optim.SGD(network.parameters(), lr=lr, momentum=0.99)
     elif opt == 'adam':
-        optimizer = torch.optim.Adam(network.parameters(), lr=lr)
+        optimizer = torch.optim.Adam(network.parameters(), lr=lr, weight_decay=0.00001)
     return optimizer
 
 

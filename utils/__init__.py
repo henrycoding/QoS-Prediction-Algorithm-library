@@ -1,6 +1,2 @@
-from .mylogger import TNLog
-
-logger = TNLog("default")
-logger.initial_logger()
-
-
+from utils.argument_list import *
+from utils.utils import get_model, init_seed

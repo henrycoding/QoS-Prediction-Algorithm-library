@@ -48,6 +48,8 @@ class TNLog(object):
                 backupCount=self.__backupCount,
                 encoding='utf-8')
             logger = logging.getLogger(self.__logger_name + "_" + str(level))
+            if logger.hasHandlers():
+                logger.handlers.clear()
             logger.propagate = False
             logger.addHandler(handlers[level])
             if level == logging.INFO or level == logging.ERROR:

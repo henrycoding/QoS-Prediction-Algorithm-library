@@ -1,3 +1,8 @@
+import os
+import shutil
+import sys
+import time
+
 import torch
 from data import MatrixDataset, ToTorchDataset
 from models.NeuMF.model import NeuMF, NeuMFModel
@@ -10,50 +15,51 @@ from utils.evaluation import mae, mse, rmse
 from root import ROOT
 from models.NeuMF.model import NeuMF, NeuMFModel
 
-import os
 # 冻结随机数
 from utils.model_util import freeze_random
-# 日志
-from utils.mylogger import TNLog
+
+from torch.utils.tensorboard import SummaryWriter
+from tensorboard import program
+
+from utils.model_util import TensorBoardTool
+
 """
 RESULT NeuMF:
 Density:0.05, type:rt, mae:0.6073, mse:3.6153, rmse:1.9014
 Density:0.10, type:rt, mae:0.5820, mse:3.5959, rmse:1.8963
 Density:0.15, type:rt, mae:0.5713, mse:3.5806, rmse:1.8922
-Density:0.20, type:rt, mae:0.5651, mse:3.5951, rmse:1.8961
+Density:0.20, type:rt, mae:0.5837, mse:3.6152, rmse:1.9014
 """
 
 freeze_random()  # 冻结随机数 保证结果一致
 
-# logger = TNLog('NeuMF')
-# logger.initial_logger()
+tb_tool = TensorBoardTool(os.getcwd())
+writer = tb_tool.run()
 
 for density in [0.05, 0.1, 0.15, 0.2]:
-    type_ = "rt"
-    rt_data = MatrixDataset(type_)
-    train_data, test_data = rt_data.split_train_test(density)
+    for type_ in ['rt', 'tp']:
+        rt_data = MatrixDataset(type_)
+        train_data, test_data = rt_data.split_train_test(density)
 
-    train_dataset = ToTorchDataset(train_data)
-    test_dataset = ToTorchDataset(test_data)
-    train_dataloader = DataLoader(train_dataset, batch_size=64)
-    test_dataloader = DataLoader(test_dataset, batch_size=64)
+        train_dataset = ToTorchDataset(train_data)
+        test_dataset = ToTorchDataset(test_data)
+        train_dataloader = DataLoader(train_dataset, batch_size=64)
+        test_dataloader = DataLoader(test_dataset, batch_size=64)
 
-    lr = 0.005
-    epochs = 200
-    dim = 8
+        lr = 0.001
+        epochs = 200
+        dim = 8
 
-    loss_fn = nn.L1Loss()
+        loss_fn = nn.L1Loss()
+        NeuMF = NeuMFModel(loss_fn, rt_data.row_n, rt_data.col_n, dim, density, writer=writer)
+        opt = Adam(NeuMF.parameters(), lr=lr, weight_decay=1e-4)
 
-    NeuMF = NeuMFModel(loss_fn, rt_data.row_n, rt_data.col_n, latent_dim=dim)
-    opt = Adam(NeuMF.parameters(), lr=lr, weight_decay=1e-4)
+        NeuMF.fit(train_dataloader, epochs, opt, eval_loader=test_dataloader)
 
-    NeuMF.fit(train_dataloader, epochs, opt, eval_loader=test_dataloader,
-              save_filename=f"Density_{density}")
+        y, y_pred = NeuMF.predict(test_dataloader)
+        mae_ = mae(y, y_pred)
+        mse_ = mse(y, y_pred)
+        rmse_ = rmse(y, y_pred)
 
-    y, y_pred = NeuMF.predict(test_dataloader, True)
-    mae_ = mae(y, y_pred)
-    mse_ = mse(y, y_pred)
-    rmse_ = rmse(y, y_pred)
-
-    NeuMF.logger.info(
-        f"Density:{density:.2f}, type:{type_}, mae:{mae_:.4f}, mse:{mse_:.4f}, rmse:{rmse_:.4f}")
+        NeuMF.logger.info(
+            f"Density:{density:.2f}, type:{type_}, mae:{mae_:.4f}, mse:{mse_:.4f}, rmse:{rmse_:.4f}")

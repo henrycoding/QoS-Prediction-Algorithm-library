@@ -1,165 +1,197 @@
 import os
+import sys
 import time
 import torch
-from torch.utils.tensorboard import SummaryWriter
 from tensorboard import program
 from tqdm import tqdm
+from yacs.config import CfgNode
+from utils.model_util import get_device
 
 from root import absolute
 from utils.evaluation import mae, mse, rmse
-from utils.model_util import load_checkpoint, save_checkpoint
-from utils.mylogger import TNLog
 
 from .utils import train_single_epoch_with_dataloader, train_mult_epochs_with_dataloader
+# 日志
+from utils.mylogger import TNLog
+
+# 模型保存
+from utils.model_util import save_checkpoint, load_checkpoint, use_optimizer, use_loss_fn
+
+# TensorBoard
+from torch.utils.tensorboard import SummaryWriter
 
 
 class ModelBase(object):
-    def __init__(self, loss_fn, use_gpu=True) -> None:
-        super().__init__()
-        self.loss_fn = loss_fn  # 损失函数
-        self.optimizer = None
-        self.device = ("cuda" if (use_gpu and torch.cuda.is_available()) else "cpu")
-        self.name = self.__class__.__name__
-        self.logger = TNLog(self.name)  # 日志
+    def __init__(self, model, config: CfgNode, writer: SummaryWriter):
+        self.model = model
+        self.config = config
+
+        # model name
+        try:
+            self.model_name = self.config.MODEL.NAME
+        except Exception:
+            raise Exception("The model name is not provided in the configuration file!")
+
+        # device
+        self.device = get_device(self.config)
+
+        # model save name
+        try:
+            self.model_save_name = self.config.MODEL.SAVE_NAME
+        except:
+            self.model_save_name = ''
+
+        # density
+        try:
+            self.density = self.config.TRAIN.DENSITY
+        except Exception:
+            raise Exception("The parameter 'TRAIN.DENSITY' not found!")
+
+        # loss function
+        self.loss_fn = use_loss_fn(self.config)
+
+        # optimizer
+        self.opt = use_optimizer(self.model, self.config)
+
+        # log
+        self.logger = TNLog(self.model_name)
         self.logger.initial_logger()
 
-        # 获取当前时间
-        self.date = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+        # running time
+        self.date = self.config.MODEL.DATE
 
-        # 保存训练过程中的模型参数，用于预测使用
+        # TensorBoard
+        if writer is None:
+            self._writer = SummaryWriter()
+        else:
+            self._writer = writer
+            self._tensorboard_title = f"Density_{self.config.TRAIN.DENSITY}"
+
+        # save model parameters
         self.saved_model_ckpt = []
 
-        # Tensorboard
-        # 自动打开tensorboard，只要浏览器中打开localhost:6006即可看到训练过程
-        save_dir = absolute(f"output\\{self.name}\\{self.date}\\TensorBoard")
-        os.makedirs(save_dir)
-        self.writer = SummaryWriter(log_dir=save_dir)
-        tensorboard = program.TensorBoard()
-        tensorboard.configure(argv=[None, '--logdir', save_dir])
-        tensorboard.launch()
+        # best loss
+        self.best_loss = None
 
-    def fit(self, train_loader, epochs, optimizer, eval_=True, eval_loader=None, save_model=True, save_filename=""):
-        """Eval为True: 自动保存最优模型（推荐）, save_model为True: 间隔epoch后自动保存模型
+    def _evaluate(self, eval_loader, epoch, eval_loss_list):
+        assert eval_loader is not None, "Please offer eval dataloader"
 
-        Args:
-            train_loader : 训练集
-            epochs : 迭代次数
-            optimizer : 优化器
-            eval_ : 训练过程中是否需要验证 Defaults to True.
-            eval_loader : 验证集数据 Defaults to None. 
-            save_model :  是否保存模型 Defaults to True.
-            save_filename :  保存的模型的名字 Defaults to "".
-        """
+        self.model.eval()
+        with torch.no_grad():
+            eval_total_loss = 0
+            for batch in tqdm(eval_loader, desc='Evaluating', position=0):
+                user, item, rating = batch[0].to(self.device), \
+                                     batch[1].to(self.device), \
+                                     batch[2].to(self.device)
+                y_pred = self.model(user, item)
+                y_real = rating.reshape(-1, 1)
+                loss = self.loss_fn(y_pred, y_real)
+                eval_total_loss += loss.item()
+
+            loss_per_epoch = eval_total_loss / len(eval_loader)
+
+            if self.best_loss is None:
+                self.best_loss = loss_per_epoch
+                is_best = True
+            elif loss_per_epoch < self.best_loss:
+                self.best_loss = loss_per_epoch
+                is_best = True
+            else:
+                is_best = False
+
+            eval_loss_list.append(loss_per_epoch)
+
+            self.logger.info(f"Test loss: {loss_per_epoch:.4f}")
+            self._writer.add_scalar(f"{self._tensorboard_title}/Eval loss", loss_per_epoch, epoch + 1)
+
+            # 保存最优的loss
+            ckpt = {}
+            if is_best:
+                ckpt = {
+                    "model": self.model.state_dict(),
+                    "epoch": epoch + 1,
+                    "optim": self.opt.state_dict(),
+                    "best_loss": self.best_loss
+                }
+                self.saved_model_ckpt.append(ckpt)
+            save_dirname = f"output/{self.model_name}/{self.date}/saved_model/Density_{self.density}"
+            # save_filename = f"density_{self.density}_loss_{self.best_loss:.4f}{_{self.model_save_name}" if len(self.model_save_name) else ''}.ckpt"
+            save_filename = str(f"density_{self.density}_loss_{self.best_loss:.4f}") + str(
+                f"_{self.model_save_name}" if len(self.model_save_name) else '') + '.ckpt'
+            save_checkpoint(ckpt, is_best, save_dirname, save_filename)
+
+    def fit(self, train_loader, eval_loader):
         self.model.train()
         self.model.to(self.device)
+
         train_loss_list = []
         eval_loss_list = []
-        best_loss = None
-        self.optimizer = optimizer
 
-        # 训练
-        for epoch in tqdm(range(epochs)):
+        # training
+        try:
+            num_epochs = self.config.TRAIN.NUM_EPOCHS
+        except:
+            num_epochs = 200
+
+        for epoch in tqdm(range(num_epochs), desc=f'Training Density={self.density}'):
             train_batch_loss = 0
-            eval_total_loss = 0
-            for batch_id, batch in enumerate(train_loader):
-                users, items, ratings = batch[0].to(self.device), batch[1].to(self.device), batch[2].to(self.device)
+
+            for batch in train_loader:
+                users, items, ratings = batch[0].to(self.device), \
+                                        batch[1].to(self.device), \
+                                        batch[2].to(self.device)
+                self.opt.zero_grad()
                 y_real = ratings.reshape(-1, 1)
-                self.optimizer.zero_grad()
                 y_pred = self.model(users, items)
-                # must be (1. nn output, 2. target)
                 loss = self.loss_fn(y_pred, y_real)
                 loss.backward()
-                self.optimizer.step()
+                self.opt.step()
 
                 train_batch_loss += loss.item()
 
             loss_per_epoch = train_batch_loss / len(train_loader)
             train_loss_list.append(loss_per_epoch)
 
-            self.logger.info(f"Training Epoch:[{epoch + 1}/{epochs}] Loss:{loss_per_epoch:.4f}")
-            self.writer.add_scalar("Training Loss", loss_per_epoch, epoch + 1)
+            self.logger.info(f"Training Epoch:[{epoch + 1}/{num_epochs}] Loss:{loss_per_epoch:.4f}")
+            self._writer.add_scalar(f"{self._tensorboard_title}/Train loss", loss_per_epoch, epoch + 1)
 
             # 验证
             if (epoch + 1) % 10 == 0:
-                if eval_ == True:
-                    assert eval_loader is not None, "Please offer eval dataloader"
-                    self.model.eval()
-                    with torch.no_grad():
-                        for batch_id, batch in tqdm(enumerate(eval_loader)):
-                            user, item, rating = batch[0].to(self.device), \
-                                                 batch[1].to(self.device), \
-                                                 batch[2].to(self.device)
-                            y_pred = self.model(user, item)
-                            y_real = rating.reshape(-1, 1)
-                            loss = self.loss_fn(y_pred, y_real)
-                            eval_total_loss += loss.item()
-                        loss_per_epoch = eval_total_loss / len(eval_loader)
+                self._evaluate(eval_loader, epoch, eval_loss_list)
 
-                        if best_loss is None:
-                            best_loss = loss_per_epoch
-                            is_best = True
-                        elif loss_per_epoch < best_loss:
-                            best_loss = loss_per_epoch
-                            is_best = True
-                        else:
-                            is_best = False
-                        eval_loss_list.append(loss_per_epoch)
-                        self.logger.info(f"Test loss: {loss_per_epoch}")
-                        self.writer.add_scalar("Eval loss", loss_per_epoch, epoch)
-                        # 保存最优的loss
-                        if is_best:
-                            ckpt = {
-                                "model": self.model.state_dict(),
-                                "epoch": epoch + 1,
-                                "optim": optimizer.state_dict(),
-                                "best_loss": best_loss
-                            }
-                        # else:
-                        #     ckpt = {}
-                        save_checkpoint(ckpt, is_best, f"output/{self.name}/{self.date}/saved_model",
-                                        f"{save_filename}_loss_{best_loss:.4f}.ckpt")
-                        self.saved_model_ckpt.append(ckpt)
-
-                elif save_model:
-                    ckpt = {
-                        "model": self.model.state_dict(),
-                        "epoch": epoch + 1,
-                        "optim": optimizer.state_dict(),
-                        "best_loss": loss_per_epoch
-                    }
-                    save_checkpoint(ckpt, save_model, f"output/{self.name}/{self.date}/saved_model",
-                                    f"{save_filename}_loss_{loss_per_epoch:.4f}.ckpt")
-                    self.saved_model_ckpt.append(ckpt)
-
-    def predict(self, test_loader, resume=False, path=None):
-        """模型预测
-
-        Args:
-            test_loader : 测试数据
-            resume: 是否加载预训练模型. Defaults to False.
-            path: 预训练模型地址. Defaults to None.
-
-        Returns:
-            [type]: [description]
-        """
+    # 预测
+    def predict(self, test_loader):
         y_pred_list = []
         y_list = []
-        # 加载预训练模型
-        if resume:
-            if path:
-                ckpt = load_checkpoint(path)
-            else:
-                models = sorted(self.saved_model_ckpt, key=lambda x: x['best_loss'])
-                ckpt = models[0]
-            self.model.load_state_dict(ckpt['model'])
-            self.logger.info(f"last checkpoint restored! ckpt: loss {ckpt['best_loss']:.4f} Epoch {ckpt['epoch']}")
+
+        # try:
+        #     resume = self.config.TRAIN.PRETRAIN
+        # except:
+        #     resume = False
+        # else:
+        #     try:
+        #         path = self.config.TRAIN.PRETRAIN_DIR
+        #     except Exception:
+        #         raise Exception("The 'TRAIN.PRETRAIN_DIR' is not provided in the configuration file!")
+
+        # load the pre-training model
+        # if resume:
+        #     ckpt = load_checkpoint(path)
+        # else:
+            # select the model with the least loss
+        models = sorted(self.saved_model_ckpt, key=lambda x: x['best_loss'])
+        ckpt = models[0]
+
+        self.model.load_state_dict(ckpt['model'])
+        self.logger.info(f"last checkpoint restored! ckpt: loss {ckpt['best_loss']:.4f} Epoch {ckpt['epoch']}")
 
         self.model.to(self.device)
         self.model.eval()
         with torch.no_grad():
-            for batch_id, batch in tqdm(enumerate(test_loader)):
-                user, item, rating = batch[0].to(self.device), batch[1].to(
-                    self.device), batch[2].to(self.device)
+            for batch in tqdm(test_loader, position=0):
+                user, item, rating = batch[0].to(self.device), \
+                                     batch[1].to(self.device), \
+                                     batch[2].to(self.device)
                 y_pred = self.model(user, item).squeeze()
                 y_real = rating.reshape(-1, 1)
                 if len(y_pred.shape) == 0:  # 防止因batch大小而变成标量,故增加一个维度

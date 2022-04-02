@@ -1,66 +1,94 @@
-from collections import UserDict
-
 import torch
+from yacs.config import CfgNode
 from models.base import ModelBase
 from torch import nn
+import torch.nn.functional as F
+from models.MLP.config import get_cfg_defaults
+from utils.model_util import ModelTest, load_checkpoint, get_device
+from models.GMF.model import GMFModel, GMF
+from root import absolute
 
 
 class MLP(nn.Module):
-    def __init__(self, n_user, n_item, dim, layers=None, output_dim=1) -> None:
-        """
-        Args:
-            n_user ([type]): 用户数量
-            n_item ([type]): 物品数量
-            dim ([type]): 特征空间的维度
-            layers (list, optional): 多层感知机每层的维度. Defaults to [16,32,16,8].
-            output_dim (int, optional): 最后输出的维度. Defaults to 1.
-        """
+    def __init__(self, config) -> None:
         super(MLP, self).__init__()
-        if layers is None:
-            layers = [32, 16, 8]
-        self.num_users = n_user
-        self.num_items = n_item
-        self.latent_dim = dim
+        self.config = config
+        self.layers = self.config.TRAIN.LAYERS
 
-        self.embedding_user = nn.Embedding(num_embeddings=self.num_users,
-                                           embedding_dim=self.latent_dim)
-        self.embedding_item = nn.Embedding(num_embeddings=self.num_items,
-                                           embedding_dim=self.latent_dim)
+        self.num_users = self.config.TRAIN.NUM_USERS
+        self.num_items = self.config.TRAIN.NUM_ITEMS
+        self.latent_dim = self.config.TRAIN.LATENT_DIM
 
-        self.cf_layers = nn.ModuleList()
+        self.embedding_user = nn.Embedding(num_embeddings=self.num_users, embedding_dim=self.latent_dim)
+        self.embedding_item = nn.Embedding(num_embeddings=self.num_items, embedding_dim=self.latent_dim)
 
-        # MLP的第一层
-        # 输入是用户特征向量 + 项目特征向量，因为假定特征空间维度都是 latemt_dim，因此输入维度大小为 2 * latemt_dim
-        self.cf_layers.append(nn.Linear(self.latent_dim * 2, layers[0]))
+        # fully-connected layers
+        self.fc_layers = nn.ModuleList()
+        for in_size, out_size in zip(self.layers[:-1], self.layers[1:]):
+            self.fc_layers.append(nn.Linear(in_size, out_size))
 
-        for in_size, out_size in zip(layers, layers[1:]):
-            self.cf_layers.append(nn.Linear(in_size, out_size))
-
-        self.cf_output = nn.Linear(layers[-1], output_dim)
+        self.affine_output = nn.Linear(self.layers[-1], 1)
+        self.logistic = nn.Sigmoid()
 
     def forward(self, user_idx, item_idx):
         user_embedding = self.embedding_user(user_idx)
         item_embedding = self.embedding_item(item_idx)
-        x = torch.cat([user_embedding, item_embedding], dim=-1)
-        for cf_layer in self.cf_layers:
-            x = cf_layer(x)
-            x = nn.ReLU()(x)
-        x = self.cf_output(x)
-        return x
+
+        vector = torch.cat([user_embedding, item_embedding], dim=-1)  # the concat latent vector
+        for layer in self.fc_layers:
+            vector = layer(vector)
+            vector = F.relu(vector)
+            # TODO BatchNorm层怎么加
+            # vector = nn.BatchNorm1d()(vector)
+            # vector = nn.Dropout(p=0.5)(vector)
+        logits = self.affine_output(vector)
+        rating = self.logistic(logits)
+        return rating
+
+    def load_pretrain_weights(self):
+        try:
+            density = self.config.TRAIN.DENSITY
+        except Exception:
+            raise Exception("THe parameter 'TRAIN.DENSITY' is not found!")
+
+        try:
+            model_dir = absolute(self.config.TRAIN.PRETRAIN_DIR.format(density=density))
+        except Exception:
+            raise Exception("The 'TRAIN.PRETRAIN_DIR' is not provided in the configuration file!")
+
+        ckpt = load_checkpoint(model_dir)
+        gmf_model = GMF(self.config)
+        gmf_model.load_state_dict(ckpt['model'])
+
+        # FIXME 加载预训练模型是否需要放到GPU上
+        # device = get_device(config)
+        # gmf_model.to(device)
+
+        self.embedding_user.weight.data = gmf_model.embedding_user.weight.data
+        self.embedding_item.weight.data = gmf_model.embedding_item.weight.data
 
 
 class MLPModel(ModelBase):
-    def __init__(self, loss_fn, n_user, n_item, dim, layers=None, output_dim=1, use_gpu=True) -> None:
-        super().__init__(loss_fn, use_gpu)
-        if layers is None:
-            layers = [32, 16, 8]
-        self.model = MLP(n_user, n_item, dim, layers=layers, output_dim=output_dim)
-        if use_gpu:
-            self.model.to(self.device)
-        self.name = __class__.__name__
+    def __init__(self, config: CfgNode, writer=None) -> None:
+        model = MLP(config)
+
+        try:
+            resume = config.TRAIN.PRETRAIN
+        except:
+            resume = False
+        if resume:
+            model.load_pretrain_weights(config)
+
+        super(MLPModel, self).__init__(model, config, writer)
 
     def parameters(self):
         return self.model.parameters()
 
     def __repr__(self) -> str:
         return str(self.model)
+
+
+if __name__ == "__main__":
+    cfg = get_cfg_defaults()
+    test = ModelTest(MLPModel, cfg)
+    test.run()

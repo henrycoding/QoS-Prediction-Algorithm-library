@@ -19,6 +19,7 @@ from utils.preprocess import l2_norm, min_max_scaler, z_score
 class ToTorchDataset(Dataset):
     """将一个三元组转成Torch Dataset的形式
     """
+
     def __init__(self, triad) -> None:
         super().__init__()
         self.triad = triad
@@ -42,6 +43,7 @@ class DatasetBase(object):
     user: userlist
     service: wslist
     """
+
     def __init__(self, type_) -> None:
         super().__init__()
 
@@ -63,6 +65,7 @@ class DatasetBase(object):
 class InfoDataset(DatasetBase):
     """用户和服务的详细描述数据
     """
+
     def __init__(self, type_, enabled_columns: list) -> None:
         self.type = type_
         super().__init__(type_)
@@ -108,7 +111,7 @@ class InfoDataset(DatasetBase):
 class MatrixDataset(DatasetBase):
     def __init__(self, type_) -> None:
         super().__init__(type_)
-        assert type_ in ["rt", "tp"], f"类型不符，请在{['rt','tp']}中选择"
+        assert type_ in ["rt", "tp"], f"类型不符，请在{['rt', 'tp']}中选择"
         self.matrix = self._get_row_data()
         self.scaler = None
 
@@ -196,9 +199,16 @@ class MatrixDataset(DatasetBase):
 
         train_n = int(self.row_n * self.col_n * density)  # 训练集数量
         train_data, test_data = triad_data[:train_n, :], triad_data[
-            train_n:, :]
+                                                         train_n:, :]
 
         return train_data, test_data
+
+
+def normalization(data):
+    min_ = np.min(data)
+    max_ = np.max(data)
+    range_ = max_ - min_
+    return (data - min_) / range_
 
 
 if __name__ == "__main__":

@@ -46,19 +46,19 @@ class XXXPlus(nn.Module):
             activation=activation)
 
         # decoder
-        self.fc_layers = nn.Sequential(
-            *[
-                Linear(in_size, out_size, activation,
-                       personal_layer + f"_{idx}")
-                for idx, (in_size, out_size
-                          ) in enumerate(zip(linear_layers, linear_layers[1:]))
-            ])
+        self.fc_layers = nn.Sequential(*[
+            Linear(in_size, out_size, activation, personal_layer + f"_{idx}")
+            for idx, (
+                in_size,
+                out_size) in enumerate(zip(linear_layers, linear_layers[1:]))
+        ])
 
         # output
         self.output_layers = nn.Sequential(
             OrderedDict({
-                # self.personal_layer:nn.Linear(linear_layers[-1], output_dim)
-                "output": nn.Linear(linear_layers[-1], output_dim)
+                self.personal_layer:
+                nn.Linear(linear_layers[-1], output_dim)
+                # "output": nn.Linear(linear_layers[-1], output_dim)
             }))
 
     def forward(self, user_idxes: list, item_idxes: list):
@@ -180,7 +180,7 @@ class FedXXXLaunch(FedModelBase):
 
             # 3. 服务端根据参数更新模型
             self.logger.info(
-                f"[{epoch}/{epochs}] Loss:{sum(loss_list)/len(loss_list):>3.5f}"
+                f"[{save_filename}] [{epoch}/{epochs}] Loss:{sum(loss_list)/len(loss_list):>3.5f}"
             )
 
             print(self.clients[0].loss_list)
@@ -211,7 +211,8 @@ class FedXXXLaunch(FedModelBase):
                 rmse_ = rmse(y_list, y_pred_list)
 
                 self.logger.info(
-                    f"Epoch:{epoch+1} mae:{mae_},mse:{mse_},rmse:{rmse_}")
+                    f"[{save_filename}] Epoch:{epoch+1} mae:{mae_},mse:{mse_},rmse:{rmse_}"
+                )
 
     # 这里的代码写的很随意 没时间优化了
     # def predict(self, d_triad, resume=False, path=None):

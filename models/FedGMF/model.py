@@ -28,6 +28,7 @@ class FedGMF(nn.Module):
         self.num_items = n_item
         self.latent_dim = dim
         self.layer = layer
+        self.personal_layer = "xxsssdddeees"
 
         self.embedding_user = nn.Embedding(num_embeddings=self.num_users,
                                            embedding_dim=self.latent_dim)
@@ -39,21 +40,16 @@ class FedGMF(nn.Module):
                   out_size) in enumerate(zip(self.layer[:-1], self.layer[1:])):
             self.fc_layers.append(nn.Linear(in_size, out_size))
 
-        # self.fc_layer = nn.Sequential(nn.Linear(self.latent_dim, 16),
-        #                               nn.Dropout(0.3), nn.Linear(16, 64),
-        #                               nn.Dropout(0.5), nn.Linear(64, 32),
-        #                               nn.Dropout(0.2))
         self.fc_output = nn.Linear(self.layer[-1], output_dim)
 
     def forward(self, user_idx, item_idx):
         user_embedding = self.embedding_user(user_idx)
         item_embedding = self.embedding_item(item_idx)
         x = torch.mul(user_embedding, item_embedding)
-        x = nn.Dropout()(x)
         for fc_layer in self.fc_layers:
             x = fc_layer(x)
             x = nn.GELU()(x)
-            x = nn.Dropout()(x)
+            x = nn.Dropout(0.2)(x)
 
         x = self.fc_output(x)
         return x
@@ -111,7 +107,7 @@ class FedGMFModel(FedModelBase):
             ]
             self._check(mixing_coefficients)
             self.server.upgrade_wich_cefficients(collector,
-                                                 mixing_coefficients)
+                                                 mixing_coefficients,self._model.personal_layer)
 
             self.logger.info(
                 f"[{epoch}/{epochs}] Loss:{sum(loss_list)/len(loss_list):>3.5f}"

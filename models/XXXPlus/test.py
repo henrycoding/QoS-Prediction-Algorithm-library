@@ -23,17 +23,41 @@ model = XXXPlusModel(user_params, item_params, 48, 128, [128, 64, 32],
 opt = Adam(model.parameters(), lr=0.0005)
 
 
+===
+model = FedXXXLaunch(user_params, item_params, 48, 128, [128,64,32], -1,
+                     [2,2], activation, train_data, test_data, loss_fn, 5,
+                     [160], "my_layer", 1)  5% 0.41mae
+5% Epoch:150 mae:0.4128972291946411,mse:2.055781841278076,rmse:1.4337997436523438
+mae:0.39854055643081665,mse:1.9525188207626343,rmse:1.3973256349563599
+20%  Epoch:260 mae:0.35921603441238403,mse:1.7138055562973022,rmse:1.3091239929199219
+===
 
-一套过拟合的参数
-model = FedXXXLaunch(user_params, item_params, 48, 128, [128,64,64,32,32], -1,
-                     [4,4,4,4], activation, train_data, loss_fn, 5,
-                     [160,128,64], 1)
 
+
+4.2日
 20
+
+
+196313 20 Epoch:200 mae:0.34299609065055847,mse:1.6866803169250488,rmse:1.2987226247787476
+model = FedXXXLaunch(user_params, item_params, 48, 128, [128,64,32], -1,
+                     [3,3], activation, train_data, test_data, loss_fn, 5,
+                     [160,32], "my_layer", 1)
+5% mae 0.39左右
+
+
+
+
+model = FedXXXLaunch(user_params, item_params, 48, 128, [128,64,32,16], -1,
+                     [3,3,2], activation, train_data, test_data, loss_fn, 5,
+                     [144,64], "my_layer", 1)
+5% mae:0.394509494304657,mse:1.979100227355957,rmse:1.4068049192428589
+20% Epoch:290 mae:0.3350681960582733,mse:1.5960551500320435,rmse:1.2633507251739502
+
+
 """
 
 epochs = 3000
-desnity = 0.05
+density = 0.2
 type_ = "rt"
 
 
@@ -62,7 +86,7 @@ fed_data_preprocess = partial(data_preprocess, is_dtriad=True)
 md = MatrixDataset(type_)
 u_info = InfoDataset("user", u_enable_columns)
 i_info = InfoDataset("service", i_enable_columns)
-train, test = md.split_train_test(desnity)
+train, test = md.split_train_test(density)
 
 # loss_fn = nn.SmoothL1Loss()
 loss_fn = nn.L1Loss()
@@ -93,12 +117,12 @@ test_data = fed_data_preprocess(test, u_info, i_info)
 # train_dataloader = DataLoader(train_dataset, batch_size=128)
 # test_dataloader = DataLoader(test_dataset, batch_size=2048)
 
-model = FedXXXLaunch(user_params, item_params, 48, 128, [128,64,32], -1,
-                     [2,2], activation, train_data, test_data, loss_fn, 10,
-                     [160,128,64,32], "my_layer", 1)
+model = FedXXXLaunch(user_params, item_params, 48, 128, [128,64,32,16], -1,
+                     [3,3,2], activation, train_data, test_data, loss_fn, 5,
+                     [144,64], "my_layer", 1)
 print(f"模型参数:", count_parameters(model))
 
-model.fit(epochs, 0.0005, 1)
+model.fit(epochs, 0.0005, 1, f"density:{density},type:{type_}")
 
 # model = XXXPlusModel(user_params, item_params, 48, 128, [128, 64, 32], [4, 4],
 #                      loss_fn, activation)
@@ -109,4 +133,4 @@ model.fit(epochs, 0.0005, 1)
 #           epochs,
 #           opt,
 #           eval_loader=test_dataloader,
-#           save_filename=f"{desnity}_{type_}")
+#           save_filename=f"{density}_{type_}")

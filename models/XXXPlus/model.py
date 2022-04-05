@@ -1,9 +1,15 @@
+import os
+import time
+
 import torch
 from data import ToTorchDataset
 from models.base.base import ModelBase
 from models.base.fedbase import FedModelBase
+from root import absolute
+from tensorboard import program
 from torch import dropout, nn
 from torch.utils.data.dataloader import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import load_checkpoint, save_checkpoint, split_d_triad
@@ -148,6 +154,16 @@ class FedXXXLaunch(FedModelBase):
         self.personal_layer = personal_layer
         self.logger = TNLog(self.name)
         self.logger.initial_logger()
+        self.date = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+
+        # Tensorboard
+        # 自动打开tensorboard，只要浏览器中打开localhost:6006即可看到训练过程
+        save_dir = absolute(f"output/{self.name}/{self.date}/TensorBoard")
+        os.makedirs(save_dir)
+        self.writer = SummaryWriter(log_dir=save_dir)
+        tensorboard = program.TensorBoard()
+        tensorboard.configure(argv=[None, '--logdir', save_dir])
+        tensorboard.launch()
 
     def fit(self, epochs, lr, fraction=1, save_filename=""):
         best_train_loss = None
@@ -183,6 +199,9 @@ class FedXXXLaunch(FedModelBase):
                 f"[{save_filename}] [{epoch}/{epochs}] Loss:{sum(loss_list)/len(loss_list):>3.5f}"
             )
 
+            self.writer.add_scalar("Training Loss", sum(loss_list)/len(loss_list), epoch + 1)
+
+
             print(self.clients[0].loss_list)
             if not best_train_loss:
                 best_train_loss = sum(loss_list) / len(loss_list)
@@ -213,6 +232,11 @@ class FedXXXLaunch(FedModelBase):
                 self.logger.info(
                     f"[{save_filename}] Epoch:{epoch+1} mae:{mae_},mse:{mse_},rmse:{rmse_}"
                 )
+
+                self.writer.add_scalar("Test mae", mae_, epoch + 1)
+                self.writer.add_scalar("Test rmse", rmse_, epoch + 1)
+
+
 
     # 这里的代码写的很随意 没时间优化了
     # def predict(self, d_triad, resume=False, path=None):

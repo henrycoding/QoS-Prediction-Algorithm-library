@@ -43,7 +43,7 @@ class NeuMF(nn.Module):
         for in_size, out_size in zip(self.layers[:-1], self.layers[1:]):
             self.fc_layers.append(nn.Linear(in_size, out_size))
 
-        self.affine_output = nn.Linear(self.latent_dim_gmf + self.layers[-1], 1)
+        self.affine_output = nn.Linear(self.latent_dim_gmf + self.layers[-1], 1)  # ???
         self.logistic = nn.Sigmoid()
 
     def forward(self, user_indices, item_indices):
@@ -52,8 +52,10 @@ class NeuMF(nn.Module):
         user_embedding_mlp = self.embedding_user_mlp(user_indices)
         item_embedding_mlp = self.embedding_item_mlp(item_indices)
 
-        gmf_vec = torch.mul(user_embedding_gmf, item_embedding_gmf)
-        mlp_vec = torch.cat([user_embedding_mlp, item_embedding_mlp], dim=-1)
+        gmf_vec = torch.mul(user_embedding_gmf, item_embedding_gmf)  # 点乘
+
+
+        mlp_vec = torch.cat([user_embedding_mlp, item_embedding_mlp], dim=-1)  # dim=-1?
 
         for layer in self.fc_layers:
             mlp_vec = layer(mlp_vec)

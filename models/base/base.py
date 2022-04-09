@@ -34,7 +34,6 @@ class ModelBase(object):
 
         # device
         self.device = get_device(self.config)
-
         # model save name
         try:
             self.model_save_name = self.config.MODEL.SAVE_NAME
@@ -133,6 +132,7 @@ class ModelBase(object):
         except:
             num_epochs = 200
 
+        # tqdm
         for epoch in tqdm(range(num_epochs), desc=f'Training Density={self.density}'):
             train_batch_loss = 0
 
@@ -178,7 +178,7 @@ class ModelBase(object):
         # if resume:
         #     ckpt = load_checkpoint(path)
         # else:
-            # select the model with the least loss
+        # select the model with the least loss
         models = sorted(self.saved_model_ckpt, key=lambda x: x['best_loss'])
         ckpt = models[0]
 

@@ -29,6 +29,18 @@ Density:0.05, type:rt, mae:0.6073, mse:3.6153, rmse:1.9014
 Density:0.10, type:rt, mae:0.5820, mse:3.5959, rmse:1.8963
 Density:0.15, type:rt, mae:0.5713, mse:3.5806, rmse:1.8922
 Density:0.20, type:rt, mae:0.5837, mse:3.6152, rmse:1.9014
+
+
+          0.05      0.10      0.15      0.20
+MAE   0.582943  0.595642  0.580388  0.571211
+MSE   3.598602  3.594801  3.588758  3.601026
+RMSE  1.896998  1.895996  1.894402  1.897637
+
+
+          0.05      0.10      0.15      0.20
+MAE   0.581534  0.595348  0.580146  0.568814
+MSE   3.600061  3.603946  3.591941  3.587708
+RMSE  1.897383  1.898406  1.895242  1.894125
 """
 
 freeze_random()  # 冻结随机数 保证结果一致
@@ -47,7 +59,7 @@ for density in [0.05, 0.1, 0.15, 0.2]:
         test_dataloader = DataLoader(test_dataset, batch_size=64)
 
         lr = 0.001
-        epochs = 200
+        epochs = 2
         dim = 8
 
         loss_fn = nn.L1Loss()

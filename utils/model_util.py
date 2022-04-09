@@ -63,6 +63,14 @@ class ModelTest:
         else:
             self.data_type = data_type
 
+        # batch_size
+        try:
+            batch_size = self.config.TRAIN.BATCH_SIZE
+        except Exception:
+            raise Exception("The 'TRAIN.BATCH_SIZE' is not provided in the configuration file!")
+        else:
+            self.batch_size = batch_size
+
         # store result
         self.result = defaultdict(list)
         self.result_show = None
@@ -71,12 +79,13 @@ class ModelTest:
         self.writer = None
 
     def run(self) -> None:
-        freeze_random()  # frozen random number
+        freeze_random()  # frozen random number 保证可重复
+        # TODO
         self.writer = TensorBoardTool(self.config).run()
 
         for density in self.density_list:
             self.density = density
-            rt_data, train_dataloader, test_dataloader = data_loading(self.data_type, density)
+            rt_data, train_dataloader, test_dataloader = data_loading(self.data_type, density, self.batch_size)
             num_users = rt_data.row_n
             num_items = rt_data.col_n
 

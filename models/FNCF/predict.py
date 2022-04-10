@@ -6,10 +6,9 @@ import torch
 from tqdm import tqdm
 from yacs.config import CfgNode
 
-from model import NeuMF
+from models.FNCF.model import NeuMF
 from models.FNCF.config import get_cfg_defaults
-from models.FNCF.ModelData import set_model_result
-from root import absolute
+from utils.LoadModelData import set_model_result
 from utils.model_util import data_loading
 import os
 # evaluation indicator

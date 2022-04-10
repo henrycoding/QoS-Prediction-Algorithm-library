@@ -1,7 +1,7 @@
 import socket
 import json
 
-from models.FNCF.ModelData import get_model_parameter
+from utils.LoadModelData import get_model_parameter
 from models.FNCF.predict import start_predict
 
 

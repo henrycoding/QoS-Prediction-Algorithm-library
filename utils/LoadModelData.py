@@ -2,7 +2,7 @@ import requests
 
 
 def get_model_parameter(id):
-    url = "http://localhost:9876/api/data/" + id
+    url = "http://localhost:9876/api/data/" + str(id)
     response = requests.get(url)
     parameters = eval(response.text)
     return parameters
@@ -14,4 +14,4 @@ def set_model_result(id, res):
 
 
 if __name__ == '__main__':
-    set_model_result(1)
+    print(get_model_parameter(1))

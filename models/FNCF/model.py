@@ -5,6 +5,7 @@ import torch.nn.functional as F
 
 from models.base import ModelBase
 from models.FNCF.config import get_cfg_defaults
+from utils.LoadModelData import get_model_parameter
 from utils.model_util import ModelTest
 
 
@@ -56,6 +57,28 @@ class NeuMFModel(ModelBase):
     def __init__(self, config: CfgNode, writer=None):
         model = NeuMF(config)
         super().__init__(model, config, writer)
+
+
+def set_train_param(parameters):
+    cfg = get_cfg_defaults()
+    cfg.defrost()
+    cfg.TRAIN.DATA_TYPE = parameters['dataset']
+    density_list = [parameters['density']]
+    cfg.TRAIN.DENSITY_LIST = density_list
+    cfg.TRAIN.BATCH_SIZE = parameters['batchSize']
+    cfg.TRAIN.LATENT_DIM_GMF = parameters['latentDim']
+    cfg.TRAIN.LATENT_DIM_MLP = parameters['latentDim']
+    cfg.TRAIN.NUM_EPOCHS = parameters['epoch']
+    cfg.TRAIN.LOSS_FN.TYPE = parameters['lossFn']
+    cfg.TRAIN.OPTIMIZER.TYPE = parameters['opt']
+    cfg.freeze()
+    return cfg
+
+
+def start_train(parameters):
+    cfg = set_train_param(parameters)
+    test = ModelTest(NeuMFModel, cfg)
+    test.run()
 
 
 if __name__ == '__main__':

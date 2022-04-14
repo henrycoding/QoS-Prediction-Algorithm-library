@@ -5,7 +5,6 @@ import torch.nn.functional as F
 
 from models.base import ModelBase
 from models.FNCF.config import get_cfg_defaults
-from utils.LoadModelData import get_model_parameter
 from utils.model_util import ModelTest
 
 

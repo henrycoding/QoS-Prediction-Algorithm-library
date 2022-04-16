@@ -23,11 +23,12 @@ from torch.utils.data import DataLoader
 # evaluation indicator
 from utils.evaluation import mae, mse, rmse
 
-# Store and display model result
+# store and display model result
 import pandas as pd
 from collections import defaultdict
 
-from sklearn.preprocessing import normalize
+# send the request to the back end
+from utils.request import send_pid
 
 """
     Some handy functions for model training ...
@@ -69,6 +70,9 @@ class ModelTest:
 
         # TensorBoard writer
         self.writer = None
+
+        # send pid to the back end
+        send_pid(os.getpid())
 
     def run(self) -> None:
         freeze_random()  # frozen random number

@@ -1,7 +1,32 @@
+import datetime
 import importlib
+import os
 import random
 import numpy as np
 import torch
+
+
+def get_local_time():
+    r"""Get current time
+
+    Returns:
+        str: current time
+    """
+    cur = datetime.datetime.now()
+    cur = cur.strftime('%b-%d-%Y_%H-%M-%S')
+
+    return cur
+
+
+def ensure_dir(dir_path):
+    r"""Make sure the directory exists, if it does not exist, create it
+
+    Args:
+        dir_path (str): directory path
+
+    """
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
 
 
 def get_model(model_name: str):
@@ -13,15 +38,19 @@ def get_model(model_name: str):
     Returns:
 
     """
-    model_file_name = model_name.lower()
+    model_submodule = [
+        'general_model'
+    ]
+
     model_module = None
-    module_path = '.'.join(['models', model_file_name])
-    if importlib.util.find_spec(module_path, __name__):
-        model_module = importlib.import_module(module_path, __name__)
+    for submodule in model_submodule:
+        module_path = '.'.join(['scdmlab.models', submodule, model_name])
+        if importlib.util.find_spec(module_path, __name__):
+            model_module = importlib.import_module(module_path, __name__)
+            break
 
     if model_module is None:
         raise ValueError('`model_name` [{}] is not the name of an existing model.'.format(model_name))
-
     model_class = getattr(model_module, model_name)
     return model_class
 

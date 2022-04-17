@@ -1,1 +1,0 @@
-from scdmlab.model.abstract_model import GeneralModel

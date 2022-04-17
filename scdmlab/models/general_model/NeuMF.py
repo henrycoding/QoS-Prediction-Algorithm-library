@@ -23,8 +23,8 @@ import torch
 import torch.nn as nn
 from torch.nn.init import normal_
 
-from scdmlab.model.abstract_model import GeneralModel
-from scdmlab.model.layers import MLPLayers
+from scdmlab.models.abstract_model import GeneralModel
+from scdmlab.models.layers import MLPLayers
 from scdmlab.utils import InputType
 
 

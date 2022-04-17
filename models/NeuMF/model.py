@@ -1,3 +1,10 @@
+import os
+import sys
+
+project_path = 'D:\SHUlpt\Code\QoS-Predcition-Algorithm-library'
+os.chdir(project_path)
+sys.path.append(project_path)
+
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -17,6 +24,9 @@ from root import absolute
 
 from models.GMF.model import GMF, GMFModel
 from models.MLP.model import MLP
+
+# send the request to the back end
+from utils.request import send_pid
 
 
 class NeuMF(nn.Module):
@@ -129,6 +139,10 @@ class NeuMFModel(ModelBase):
 
 
 if __name__ == "__main__":
+    # send pid to the back end
+    # send_pid(os.getpid())
+
+
     cfg = get_cfg_defaults()
     test = ModelTest(NeuMFModel, cfg)
     test.run()

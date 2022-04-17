@@ -1,4 +1,5 @@
 general_arguments = [
+    'id',
     'gpu_id',
     'use_gpu',
     'seed',

@@ -1,4 +1,5 @@
 # general
+id: ~ # The id of the corresponding database entry when the current model runs
 seed: 2020
 reproducibility: True
 use_gpu: True

@@ -19,9 +19,9 @@ def run_scdmlab(model=None, dataset=None, dataset_type=None, config_file_list=No
     logger = getLogger()
     logger.info(config)
 
-    # for type_ in config['dataset_type']:
-    #     # dataset preparing
-    #     dataset = create_dataset(config)
+    for type_ in config['dataset_type']:
+        # dataset preparing
+        dataset = create_dataset(config)
     #     for density in config['density']:
     #         # dataset splitting
     #         train_dataloader, test_dataloader = data_preparation(config, dataset, density)

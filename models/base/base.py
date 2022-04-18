@@ -5,6 +5,8 @@ import torch
 from tensorboard import program
 from tqdm import tqdm
 from yacs.config import CfgNode
+
+from utils.LoadModelData import send_train_progress
 from utils.model_util import get_device
 
 from root import absolute
@@ -134,8 +136,9 @@ class ModelBase(object):
 
         # tqdm
         for epoch in tqdm(range(num_epochs), desc=f'Training Density={self.density}'):
+            progress = int(epoch / num_epochs * 100)
+            send_train_progress(progress)
             train_batch_loss = 0
-
             for batch in train_loader:
                 users, items, ratings = batch[0].to(self.device), \
                                         batch[1].to(self.device), \

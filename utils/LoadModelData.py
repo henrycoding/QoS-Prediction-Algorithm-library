@@ -25,5 +25,10 @@ def send_pid(pid):
     requests.post(url)
 
 
+def send_train_progress(progress):
+    url = "http://localhost:9876/api/data/train/progress"
+    requests.post(url, data={'progress': progress})
+
+
 if __name__ == '__main__':
     print(get_model_parameter(29))

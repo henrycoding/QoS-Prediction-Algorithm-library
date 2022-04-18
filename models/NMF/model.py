@@ -10,7 +10,7 @@ from tqdm import tqdm
 from data import MatrixDataset
 from root import absolute
 from utils import TNLog
-from utils.LoadModelData import set_model_path, set_model_result
+from utils.LoadModelData import set_model_path, set_model_result, send_train_progress, get_model_parameter
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import triad_to_matrix, freeze_random
 
@@ -87,7 +87,8 @@ class NMFModel(object):
         """
 
         for epoch in tqdm(range(epochs), desc="NMF Training Epoch"):
-
+            progress = int(epoch / epochs * 100)
+            send_train_progress(progress)
             tmp_user_matrix = copy.deepcopy(self.user_matrix)
             tmp_item_matrix = copy.deepcopy(self.item_matrix)
 
@@ -171,11 +172,19 @@ def start_predict_NMF(parameters):
     train_data, test_data = md_data.split_train_test(density)
     user_matrix = np.loadtxt(load_path + '\\user.txt')
     item_matrix = np.loadtxt(load_path + "\\item.txt")
+    now_step = 0
+    progress = 0
     for row in tqdm(test_data, desc='NMF Perdicting'):
+        temp_progress = int((now_step / test_data.shape[0]) * 100)
+        if temp_progress > progress:
+            progress = temp_progress
+            send_train_progress(progress)
+            print(progress)
         uid, iid, y = int(row[0]), int(row[1]), float(row[2])
         y_pred = user_matrix[uid] @ item_matrix[iid].T
         y_pred_list.append(y_pred)
         y_list.append(y)
+        now_step += 1
     mae_ = mae(y_list, y_pred_list)
     mse_ = mse(y_list, y_pred_list)
     rmse_ = rmse(y_list, y_pred_list)
@@ -185,3 +194,8 @@ def start_predict_NMF(parameters):
         'rmse': np.float(rmse_),
     }
     set_model_result(parameters['id'], res)
+
+
+if __name__ == '__main__':
+    parameters = get_model_parameter(29)
+    start_predict_NMF(parameters)

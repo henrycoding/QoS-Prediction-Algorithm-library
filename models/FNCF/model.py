@@ -61,20 +61,20 @@ class NeuMFModel(ModelBase):
 def set_train_param(parameters):
     cfg = get_cfg_defaults()
     cfg.defrost()
-    cfg.TRAIN.DATA_TYPE = parameters['dataset']
-    density_list = [parameters['density']]
+    cfg.TRAIN.DATA_TYPE = parameters['model']['dataset']
+    density_list = [parameters['model']['density']]
     cfg.TRAIN.DENSITY_LIST = density_list
-    cfg.TRAIN.BATCH_SIZE = parameters['batchSize']
-    cfg.TRAIN.LATENT_DIM_GMF = parameters['latentDim']
-    cfg.TRAIN.LATENT_DIM_MLP = parameters['latentDim']
-    cfg.TRAIN.NUM_EPOCHS = parameters['epoch']
-    cfg.TRAIN.LOSS_FN.TYPE = parameters['lossFn']
-    cfg.TRAIN.OPTIMIZER.TYPE = parameters['opt']
+    cfg.TRAIN.BATCH_SIZE = parameters['model']['batchSize']
+    cfg.TRAIN.LATENT_DIM_GMF = parameters['model']['latentDim']
+    cfg.TRAIN.LATENT_DIM_MLP = parameters['model']['latentDim']
+    cfg.TRAIN.NUM_EPOCHS = parameters['model']['epoch']
+    cfg.TRAIN.LOSS_FN.TYPE = parameters['model']['lossFn']
+    cfg.TRAIN.OPTIMIZER.TYPE = parameters['model']['opt']
     cfg.freeze()
     return cfg
 
 
-def start_train(parameters):
+def start_train_NeuMF(parameters):
     cfg = set_train_param(parameters)
     test = ModelTest(NeuMFModel, cfg)
     test.run()

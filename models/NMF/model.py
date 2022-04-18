@@ -1,11 +1,18 @@
 import copy
+import os
+import time
 
 import numpy as np
 # Non-negative Matrix Factorization
 from sklearn.decomposition import NMF
 from tqdm import tqdm
+
+from data import MatrixDataset
+from root import absolute
+from utils import TNLog
+from utils.LoadModelData import set_model_path, set_model_result
 from utils.evaluation import mae, mse, rmse
-from utils.model_util import triad_to_matrix
+from utils.model_util import triad_to_matrix, freeze_random
 
 
 class NMFModel(object):
@@ -49,6 +56,7 @@ class NMFModel(object):
     def fit(self,
             triad,
             test,
+            density=0.05,
             epochs=100,
             verbose=False,
             early_stop=True,
@@ -106,15 +114,22 @@ class NMFModel(object):
 
             # self.item_matrix = self.item_matrix * up_H / down_H
 
-
             if early_stop and np.mean(np.abs(self.user_matrix - tmp_user_matrix)) < 1e-4 and \
-                np.mean(np.abs(self.item_matrix - tmp_item_matrix)) < 1e-4:
+                    np.mean(np.abs(self.item_matrix - tmp_item_matrix)) < 1e-4:
                 print('Converged')
                 break
 
             if verbose and (epoch + 1) % 20 == 0:
                 y_list, y_pred_list = self.predict(test)
-                print(f"[{epoch}/{epochs}] MAE:{mae(y_list,y_pred_list):.5f}")
+                print(f"[{epoch}/{epochs}] MAE:{mae(y_list, y_pred_list):.5f}")
+        date = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+        save_dirname = absolute(f"output\\NMF\\{date}\\saved_model\\Density_{density}")
+        isExists = os.path.exists(save_dirname)
+        if not isExists:
+            os.makedirs(save_dirname)
+        np.savetxt(save_dirname + "\\user.txt", self.user_matrix, fmt='%lf', delimiter=' ')
+        np.savetxt(save_dirname + "\\item.txt", self.item_matrix, fmt='%lf', delimiter=' ')
+        return save_dirname
 
     def predict(self, triad):
         assert self.user_matrix is not None, "Please fit first e.g. model.fit()"
@@ -126,3 +141,47 @@ class NMFModel(object):
             y_pred_list.append(y_pred)
             y_list.append(y)
         return y_list, y_pred_list
+
+
+def start_train_NMF(parameters):
+    freeze_random()  # 冻结随机数 保证结果一致
+    logger = TNLog('NMF')
+    logger.initial_logger()
+    dataset = parameters['model']['dataset']
+    density = parameters['model']['density']
+    latent_dim = parameters['model']['latentDim']
+    epochs = parameters['model']['epoch']
+    md_data = MatrixDataset(dataset)
+    train_data, test_data = md_data.split_train_test(density)
+    nmf = NMFModel(md_data.row_n, md_data.col_n, latent_dim)
+    save_path = nmf.fit(train_data, test_data, density, epochs, verbose=True, normalize=False, early_stop=True)
+    res = {
+        'save_path': save_path
+    }
+    set_model_path(parameters['id'], res)
+
+
+def start_predict_NMF(parameters):
+    y_pred_list = []
+    y_list = []
+    dataset = parameters['model']['dataset']
+    density = parameters['model']['density']
+    load_path = parameters['savePath']
+    md_data = MatrixDataset(dataset)
+    train_data, test_data = md_data.split_train_test(density)
+    user_matrix = np.loadtxt(load_path + '\\user.txt')
+    item_matrix = np.loadtxt(load_path + "\\item.txt")
+    for row in tqdm(test_data, desc='NMF Perdicting'):
+        uid, iid, y = int(row[0]), int(row[1]), float(row[2])
+        y_pred = user_matrix[uid] @ item_matrix[iid].T
+        y_pred_list.append(y_pred)
+        y_list.append(y)
+    mae_ = mae(y_list, y_pred_list)
+    mse_ = mse(y_list, y_pred_list)
+    rmse_ = rmse(y_list, y_pred_list)
+    res = {
+        'mae': np.float(mae_),
+        'mse': np.float(mse_),
+        'rmse': np.float(rmse_),
+    }
+    set_model_result(parameters['id'], res)

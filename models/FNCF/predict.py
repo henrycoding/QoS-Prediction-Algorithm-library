@@ -31,10 +31,10 @@ class Predict:
         # self.model_load = absolute(config.MODEL.LOAD_PATH)
 
         # parameters
-        self.density = parameters['density']
-        self.load_path = parameters['model']['savePath']
-        self.data_type = parameters['dataset']
-        self.batch_size = parameters['batchSize']
+        self.density = parameters['model']['density']
+        self.load_path = parameters['savePath']
+        self.data_type = parameters['model']['dataset']
+        self.batch_size = parameters['model']['batchSize']
 
     def predict(self):
         for density in self.density_list:
@@ -102,7 +102,7 @@ class Predict:
         self.result[density].extend([mae_, mse_, rmse_])
 
 
-def start_predict(parameters):
+def start_predict_NeuMF(parameters):
     print("start_predict")
     cfg = get_cfg_defaults()
     predict = Predict(cfg, parameters)
@@ -116,6 +116,7 @@ if __name__ == '__main__':
     predict.predict_one()
 
 """
+
           0.05      0.10      0.15      0.20
 MAE   0.582943  0.595642  0.580388  0.571211
 MSE   3.598602  3.594801  3.588758  3.601026

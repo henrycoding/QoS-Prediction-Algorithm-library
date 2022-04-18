@@ -3,13 +3,15 @@ import os
 import socket
 import sys
 
+
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
 
-from models.FNCF.model import start_train
+from models.NMF.model import start_train_NMF, start_predict_NMF
+from models.FNCF.model import start_train_NeuMF
 from utils.LoadModelData import get_model_parameter, send_pid
-from models.FNCF.predict import start_predict
-
+from models.FNCF.predict import start_predict_NeuMF
 
 # class SocketServer:
 #
@@ -57,8 +59,13 @@ if __name__ == '__main__':
         flag = sys.argv[1].split("-")
         parameters = get_model_parameter(flag[1])
         print(parameters)
-        if flag[0] == "p":
-            start_predict(parameters)
-        elif flag[0] == 't':
-            start_train(parameters)
-
+        if flag[2] == "NeuMF":
+            if flag[0] == "p":
+                start_predict_NeuMF(parameters)
+            elif flag[0] == 't':
+                start_train_NeuMF(parameters)
+        elif flag[2] == "NMF":
+            if flag[0] == "p":
+                start_predict_NMF(parameters)
+            elif flag[0] == 't':
+                start_train_NMF(parameters)

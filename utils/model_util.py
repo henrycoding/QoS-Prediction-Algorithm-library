@@ -27,6 +27,8 @@ from utils.evaluation import mae, mse, rmse
 import pandas as pd
 from collections import defaultdict
 
+from utils.request import send_model_result
+
 """
     Some handy functions for model training ...
 """
@@ -106,6 +108,13 @@ class ModelTest:
         rmse_ = rmse(y, y_pred)
 
         self.result[self.density].extend([mae_, mse_, rmse_])
+        res = {
+            "id": self.config.SYSTEM.ID,
+            "mae": round(mae_, 4),
+            "mse": round(mse_, 4),
+            "rmse": round(rmse_, 4),
+        }
+        send_model_result(res)
         self.engine.logger.info(
             f"Density:{self.density:.2f}, type:{self.data_type}, mae:{mae_:.4f}, mse:{mse_:.4f}, rmse:{rmse_:.4f}")
 

@@ -1,3 +1,4 @@
+import argparse
 import os
 import sys
 
@@ -139,10 +140,17 @@ class NeuMFModel(ModelBase):
 
 
 if __name__ == "__main__":
-    # send pid to the back end
-    # send_pid(os.getpid())
-
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--id', type=int)
+    args, _ = parser.parse_known_args()
 
     cfg = get_cfg_defaults()
+    cfg.defrost()
+    cfg.SYSTEM.ID = args.id
+    cfg.freeze()
+
+    # send pid to the back end
+    send_pid(cfg.SYSTEM.ID, os.getpid())
+
     test = ModelTest(NeuMFModel, cfg)
     test.run()

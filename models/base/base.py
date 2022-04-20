@@ -20,6 +20,8 @@ from utils.model_util import save_checkpoint, load_checkpoint, use_optimizer, us
 # TensorBoard
 from torch.utils.tensorboard import SummaryWriter
 
+from utils.request import send_persentage
+
 
 class ModelBase(object):
     def __init__(self, model, config: CfgNode, writer: SummaryWriter):
@@ -131,9 +133,12 @@ class ModelBase(object):
         try:
             num_epochs = self.config.TRAIN.NUM_EPOCHS
         except:
-            num_epochs = 200
+            num_epochs = 100
 
         for epoch in tqdm(range(num_epochs), desc=f'Training Density={self.density}'):
+            presentage = int(epoch / num_epochs * 100)
+            send_persentage(self.config.SYSTEM.ID, presentage)
+
             train_batch_loss = 0
 
             for batch in train_loader:
@@ -178,7 +183,7 @@ class ModelBase(object):
         # if resume:
         #     ckpt = load_checkpoint(path)
         # else:
-            # select the model with the least loss
+        # select the model with the least loss
         models = sorted(self.saved_model_ckpt, key=lambda x: x['best_loss'])
         ckpt = models[0]
 

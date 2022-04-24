@@ -8,12 +8,11 @@ import torch
 from logging import getLogger
 from scdmlab.config import BASE_PATH, ROOT_PATH
 from scdmlab.utils import get_model, general_arguments, training_arguments, evaluation_arguments, dataset_arguments, \
-    set_color
+    set_color, ModelType
 
 
 class Config(object):
-    def __init__(self, model=None, dataset=None, dataset_type=None, config_file_list=None, config_dict=None):
-        self.dataset_type = dataset_type
+    def __init__(self, model=None, dataset=None, config_file_list=None, config_dict=None):
         self._init_parameters_category()
         self.file_config_dict = self._load_config_files(config_file_list)
         self.variable_config_dict = self._load_variable_config_dict(config_dict)
@@ -137,13 +136,18 @@ class Config(object):
         return config_dict
 
     def _load_internal_config_dict(self, model, model_class, dataset):
-        current_path = os.path.dirname(os.path.realpath(__file__))
         overall_init_file = os.path.join(BASE_PATH, 'properties', 'overall.yaml')
         model_init_file = os.path.join(BASE_PATH, 'properties', 'model', str(model) + '.yaml')
+        sample_init_file = os.path.join(BASE_PATH, 'properties', 'dataset', 'sample.yaml')
         dataset_init_file = os.path.join(BASE_PATH, 'properties', 'dataset', str(dataset) + '.yaml')
 
+        quick_start_config_path = os.path.join(BASE_PATH, 'properties', 'quick_start_config_path')
+        context_aware_init = os.path.join(quick_start_config_path, 'context-aware.yaml')
+        context_aware_on_WSDream_general_init = os.path.join(quick_start_config_path,
+                                                             'context-aware_WSDream-general.yaml')
+
         self.internal_config_dict = dict()
-        for file in [overall_init_file, model_init_file, dataset_init_file]:
+        for file in [overall_init_file, model_init_file, sample_init_file, dataset_init_file]:
             if os.path.isfile(file):
                 config_dict = self._update_internal_config_dict(file)
                 if file == dataset_init_file:
@@ -152,6 +156,13 @@ class Config(object):
                     ]
         self.internal_config_dict['MODEL_TYPE'] = model_class.type
 
+        if self.internal_config_dict['MODEL_TYPE'] == ModelType.GENERAL:
+            pass
+        elif self.internal_config_dict['MODEL_TYPE'] == ModelType.CONTEXT:
+            self._update_internal_config_dict(context_aware_init)
+            if dataset == 'WSDream-general':
+                self._update_internal_config_dict(context_aware_on_WSDream_general_init)
+
     def _get_final_config_dict(self):
         final_config_dict = dict()
         final_config_dict.update(self.internal_config_dict)
@@ -159,10 +170,14 @@ class Config(object):
         return final_config_dict
 
     def _set_default_parameters(self):
-        self.final_config_dict['model'] = self.model
         self.final_config_dict['dataset'] = self.dataset
-        self.final_config_dict['dataset_type'] = self.dataset_type
-        self.file_config_dict['data_path'] = os.path.join(ROOT_PATH, 'dataset', str(self.dataset))
+        self.final_config_dict['model'] = self.model
+        if self.dataset == 'WSDream-general':
+            self.final_config_dict['data_path'] = os.path.join(ROOT_PATH, 'dataset', self.dataset)
+        else:
+            self.final_config_dict['data_path'] = os.path.join(self.final_config_dict['data_path'], self.dataset)
+
+        # TODO
 
     def _init_device(self):
         use_gpu = self.final_config_dict['use_gpu']

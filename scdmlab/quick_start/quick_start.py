@@ -8,9 +8,9 @@ from scdmlab.data import create_dataset, data_preparation
 from scdmlab.utils import init_logger, get_model, init_seed
 
 
-def run_scdmlab(model=None, dataset=None, dataset_type=None, config_file_list=None, config_dict=None, saved=True):
+def run_scdmlab(model=None, dataset=None, config_file_list=None, config_dict=None, saved=True):
     # configurations initialization
-    config = Config(model=model, dataset=dataset, dataset_type=dataset_type, config_file_list=config_file_list,
+    config = Config(model=model, dataset=dataset, config_file_list=config_file_list,
                     config_dict=config_dict)
     init_seed(config['seed'], config['reproducibility'])
 
@@ -19,9 +19,12 @@ def run_scdmlab(model=None, dataset=None, dataset_type=None, config_file_list=No
     logger = getLogger()
     logger.info(config)
 
-    for type_ in config['dataset_type']:
-        # dataset preparing
-        dataset = create_dataset(config)
+    # dataset filtering
+    dataset = create_dataset(config)
+
+    # for type_ in config['dataset_type']:
+    #     # dataset preparing
+    #     dataset = create_dataset(config)
     #     for density in config['density']:
     #         # dataset splitting
     #         train_dataloader, test_dataloader = data_preparation(config, dataset, density)
@@ -29,8 +32,8 @@ def run_scdmlab(model=None, dataset=None, dataset_type=None, config_file_list=No
     #         # model loading and initialization
     #         model = get_model(config['model'])(config, train_dataloader).to(config['device'])
 
-            # trainer loading and initialization
-            # trainer = get_trainer(config['MODEL_TYPE'], config['model'])(config, model)
+    # trainer loading and initialization
+    # trainer = get_trainer(config['MODEL_TYPE'], config['model'])(config, model)
 
     # model loading and initalization
 

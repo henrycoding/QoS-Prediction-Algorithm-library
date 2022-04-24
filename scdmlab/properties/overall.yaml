@@ -1,9 +1,8 @@
 # general
-id: ~ # The id of the corresponding database entry when the current model runs
+gpu_id: 0
+use_gpu: True
 seed: 2020
 reproducibility: True
-use_gpu: True
-gpu_id: 0
 state: INFO
 data_path: 'dataset/'
 checkpoint_dir: 'saved'

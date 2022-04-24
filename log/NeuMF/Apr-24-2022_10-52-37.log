@@ -1,0 +1,46 @@
+Sun 24 Apr 2022 10:52:37 INFO  
+General Hyper Parameters:
+seed = 2020
+reproducibility = True
+use_gpu = True
+gpu_id = 0
+state = INFO
+data_path = D:\SHUlpt\Code\QoS-Predcition-Algorithm-library\dataset\WSDream-general
+checkpoint_dir = saved
+show_progress = True
+
+Training Hyper Parameters:
+epochs = 200
+train_batch_size = 128
+learner = adam
+learning_rate = 0.001
+weight_decay = 0.0
+eval_step = 10
+stopping_step = None
+loss_decimal_place = 4
+
+Evaluation Hyper Parameters:
+metrics = ['MAE', 'MSE', 'RMSE']
+eval_batch_size = 128
+metric_decimal_place = 4
+
+Dataset Hyper Parameters:
+
+
+Other Hyper Parameters: 
+id = None
+density = [0.05, 0.1, 0.15, 0.2]
+dataset_type = ['rt', 'tp']
+mf_embedding_size = 64
+mlp_embedding_size = 64
+mlp_hidden_size = [128, 64]
+dropout_prob = 0.1
+mf_train = True
+mlp_train = True
+use_pretrain = False
+mf_pretrain_path = None
+mlp_pretrain_path = None
+MODEL_TYPE = ModelType.GENERAL
+device = cuda
+
+

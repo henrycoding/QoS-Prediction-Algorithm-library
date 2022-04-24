@@ -12,6 +12,7 @@ def create_dataset(config):
     model_type = config['MODEL_TYPE']
     type2class = {
         ModelType.GENERAL: 'MatrixDataset',
+        ModelType.CONTEXT: 'MatrixDataset',
     }
     dataset_class = getattr(dataset_module, type2class[model_type])
 

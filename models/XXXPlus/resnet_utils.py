@@ -5,11 +5,11 @@ from torch import nn
 
 
 class Linear(nn.Module):
-    def __init__(self, in_size, out_size, activation, personal_layer_name=None):
+    def __init__(self, in_size, out_size, activation, dropout=0.3, personal_layer_name=None):
         super().__init__()
         if personal_layer_name is None:
             self.fc_layer = nn.Sequential(nn.Linear(in_size, out_size),
-                                        activation(),nn.Dropout(0.3))
+                                        activation(),nn.Dropout(dropout))
         else:
             self.fc_layer = nn.Sequential(
                 OrderedDict({
@@ -141,6 +141,7 @@ class ResNetEncoder(nn.Module):
             *[
                 ResNetLayer(
                     in_size, out_size, n=n, activation=activation, block=block)
+                    
                 for (in_size,
                      out_size), n in zip(self.in_out_block_sizes, deepths)
             ]

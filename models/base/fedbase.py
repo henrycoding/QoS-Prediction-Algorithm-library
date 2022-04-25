@@ -9,43 +9,70 @@ from tqdm import tqdm
 
 from utils.model_util import use_optimizer
 
-from .utils import train_mult_epochs_with_dataloader
+from .utils import train_mult_epochs_with_dataloader,freeze_specific_params,unfreeze_params
 
 
 class ClientBase(object):
-    def __init__(self, device, model) -> None:
+    def __init__(self, device, model, personalized=False) -> None:
         self.device = device
         self.model = model
         self.data_loader = None
         self.test_data_loader = None
+        self.is_personalized = personalized
         super().__init__()
 
-    def fit(self, params, loss_fn, optimizer: str, lr, epochs=5):
+
+
+    def fit(self,
+            params,
+            loss_fn,
+            optimizer: str,
+            lr,
+            epochs=5,
+            header_epoch=None):
 
         # 用本地模型的参数替换服务端的模型
-        for name, param in self.model.named_parameters():
-            if self.model.personal_layer in name:
-                params[name] = param
+        if self.is_personalized:
+            for name, param in self.model.named_parameters():
+                if self.model.personal_layer in name:
+                    params[name] = param
 
         self.model.load_state_dict(params)
         self.model.to(self.device)
         opt = use_optimizer(self.model, optimizer, lr)
+
+        if self.is_personalized and header_epoch is not None:
+            freeze_specific_params(self.model,self.model.personal_layer)
+            train_mult_epochs_with_dataloader(
+                epochs,
+                model=self.model,
+                device=self.device,
+                dataloader=self.data_loader,
+                opt=opt,
+                loss_fn=loss_fn
+            )
+            unfreeze_params(self.model)
+
         loss, lis = train_mult_epochs_with_dataloader(
             epochs,
             model=self.model,
             device=self.device,
             dataloader=self.data_loader,
             opt=opt,
-            loss_fn=loss_fn)
+            loss_fn=loss_fn
+        
+        )
         self.loss_list = [*lis]
         return self.model.state_dict(), round(loss, 4)
 
-    def predict(self,params):
+    def predict(self, params):
 
         # 用本地模型的参数替换服务端的模型
-        for name, param in self.model.named_parameters():
-            if self.model.personal_layer in name:
-                params[name] = param
+        if self.is_personalized:
+            for name, param in self.model.named_parameters():
+                if self.model.personal_layer in name:
+                    params[name] = param
+
         self.model.load_state_dict(params)
         self.model.to(self.device)
         self.model.eval()
@@ -168,7 +195,7 @@ class FedModelBase(object):
             selected_total_size += self.clients[uid].n_item
         return collector, client_loss, selected_total_size
 
-    def evaluation_selected_clients(self, client_indices,params):
+    def evaluation_selected_clients(self, client_indices, params):
         y_list = []
         y_pred_list = []
         for uid in tqdm(client_indices,

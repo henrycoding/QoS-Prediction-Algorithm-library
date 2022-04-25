@@ -21,21 +21,23 @@ class Client(ClientBase):
                  uid,
                  device,
                  model,
+                 is_personalized=False,
+                 header_epoch=None,
                  batch_size=-1,
                  local_epochs=5) -> None:
-        super().__init__(device, model)
+        super().__init__(device, model, is_personalized)
         self.triad = triad
         self.test_triad = test_triad
         self.uid = uid
         self.n_item = len(triad)
         self.local_epochs = local_epochs
+        self.header_epoch = header_epoch
         self.batch_size = self.n_item if batch_size == -1 else batch_size
-
 
         # 每一个节点要有测试集和训练集
         self.test_data_loader = DataLoader(ToTorchDataset(self.test_triad),
-                                      batch_size=len(test_triad),
-                                      drop_last=True)
+                                           batch_size=len(test_triad),
+                                           drop_last=True)
 
         self.data_loader = DataLoader(ToTorchDataset(self.triad),
                                       batch_size=self.batch_size,
@@ -45,9 +47,14 @@ class Client(ClientBase):
                                        drop_last=True)
 
     def fit(self, params, loss_fn, optimizer: str, lr):
-        return super().fit(params, loss_fn, optimizer, lr, epochs=self.local_epochs)
-    
-    def predict(self,params):
+        return super().fit(params,
+                           loss_fn,
+                           optimizer,
+                           lr,
+                           epochs=self.local_epochs,
+                           header_epoch=self.header_epoch)
+
+    def predict(self, params):
         return super().predict(params)
 
 
@@ -59,16 +66,20 @@ class Clients(object):
                  test_d_triad,
                  model,
                  device,
+                 is_personalized=False,
+                 header_epoch=None,
                  batch_size=-1,
                  local_epochs=5) -> None:
         super().__init__()
         self.triad, self.p_triad = split_d_triad(d_triad)
-        self.test_triad,self.test_p_triad = split_d_triad(test_d_triad)
+        self.test_triad, self.test_p_triad = split_d_triad(test_d_triad)
         self.model = model
         self.device = device
         self.clients_map = {}  # 存储每个client的数据集
         self.batch_size = batch_size
         self.local_epochs = local_epochs
+        self.is_personalized = is_personalized
+        self.header_epoch = header_epoch
 
         self._get_clients()
 
@@ -79,7 +90,6 @@ class Clients(object):
             uid, iid, rate = int(triad_row[0]), int(triad_row[1]), float(
                 triad_row[2])
             train_data_dic[uid].append(p_triad_row)
-
 
         test_data_dic = defaultdict(list)
         for triad_row, p_triad_row in zip(self.test_triad, self.test_p_triad):
@@ -95,8 +105,11 @@ class Clients(object):
                                            uid,
                                            self.device,
                                            copy.deepcopy(self.model),
+                                           is_personalized=self.is_personalized,
+                                           header_epoch=self.header_epoch,
                                            batch_size=self.batch_size,
                                            local_epochs=self.local_epochs)
+
         print(f"Clients Nums:{len(self.clients_map)}")
 
     def sample_clients(self, fraction):

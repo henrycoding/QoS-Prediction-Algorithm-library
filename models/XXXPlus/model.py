@@ -41,10 +41,12 @@ class XXXPlus(nn.Module):
         self.user_embedding = Embedding(**user_embedding_params)
         self.item_embedding = Embedding(**item_embedding_params)
 
+        # left
         self.decrease_encoder = ResNetEncoder(in_size=in_size,
                                               blocks_sizes=blocks_size,
                                               deepths=deepths,
                                               activation=activation)
+        # right
         self.increase_encoder = ResNetEncoder_v2(
             output_size=output_size,
             blocks_sizes=blocks_size[::-1],
@@ -53,13 +55,16 @@ class XXXPlus(nn.Module):
 
         # decoder
         self.fc_layers = nn.Sequential(*[
-            Linear(in_size, out_size, activation, personal_layer + f"_{idx}")
+            Linear(in_size,
+                   out_size,
+                   activation,
+                   personal_layer_name=personal_layer)
             for idx, (
                 in_size,
                 out_size) in enumerate(zip(linear_layers, linear_layers[1:]))
         ])
 
-        # output
+       # output
         self.output_layers = nn.Sequential(
             OrderedDict({
                 self.personal_layer:
@@ -67,6 +72,7 @@ class XXXPlus(nn.Module):
                 # "output": nn.Linear(linear_layers[-1], output_dim)
             }))
 
+            
     def forward(self, user_idxes: list, item_idxes: list):
         user_embedding = self.user_embedding(user_idxes)
         item_embedding = self.item_embedding(item_idxes)
@@ -96,8 +102,8 @@ class XXXPlusModel(ModelBase):
                  use_gpu=True) -> None:
         super().__init__(loss_fn, use_gpu)
         self.model = XXXPlus(user_params, item_params, in_size, output_size,
-                             blocks_size, deepths, activation, linear_layers,
-                             output_dim)
+                             blocks_size, deepths, activation, linear_layers=linear_layers,
+                             output_dim=output_dim)
 
         self.name = __class__.__name__
 
@@ -129,7 +135,9 @@ class FedXXXLaunch(FedModelBase):
                  loss_fn,
                  local_epoch,
                  linear_layers,
-                 personal_layer,
+                 is_personalized=False,
+                 header_epoch=None,
+                 personal_layer="my_layer",
                  output_dim=1,
                  optimizer="adam",
                  use_gpu=True) -> None:
@@ -147,7 +155,7 @@ class FedXXXLaunch(FedModelBase):
                               personal_layer=personal_layer,
                               output_dim=output_dim)
         self.server = Server()
-        self.clients = Clients(d_triad, test_d_triad, self._model, self.device,
+        self.clients = Clients(d_triad, test_d_triad, self._model, self.device,is_personalized,header_epoch,
                                batch_size, local_epoch)
         self.optimizer = optimizer
         self.loss_fn = loss_fn
@@ -161,11 +169,11 @@ class FedXXXLaunch(FedModelBase):
         save_dir = absolute(f"output/{self.name}/{self.date}/TensorBoard")
         os.makedirs(save_dir)
         self.writer = SummaryWriter(log_dir=save_dir)
-        tensorboard = program.TensorBoard()
-        tensorboard.configure(argv=[None, '--logdir', save_dir])
-        tensorboard.launch()
+        # tensorboard = program.TensorBoard()
+        # tensorboard.configure(argv=[None, '--logdir', save_dir])
+        # tensorboard.launch()
 
-    def fit(self, epochs, lr, fraction=1, save_filename=""):
+    def fit(self, epochs, lr, verbose_epoch=10, fraction=1, save_filename=""):
         best_train_loss = None
         is_best = False
         for epoch in tqdm(range(epochs),
@@ -199,8 +207,8 @@ class FedXXXLaunch(FedModelBase):
                 f"[{save_filename}] [{epoch}/{epochs}] Loss:{sum(loss_list)/len(loss_list):>3.5f}"
             )
 
-            self.writer.add_scalar("Training Loss", sum(loss_list)/len(loss_list), epoch + 1)
-
+            self.writer.add_scalar("Training Loss",
+                                   sum(loss_list) / len(loss_list), epoch + 1)
 
             print(self.clients[0].loss_list)
             if not best_train_loss:
@@ -221,7 +229,7 @@ class FedXXXLaunch(FedModelBase):
                 ckpt, is_best, f"output/{self.name}",
                 f"loss_{save_filename}_{best_train_loss:.4f}.ckpt")
 
-            if (epoch + 1) % 10 == 0:
+            if (epoch + 1) % verbose_epoch == 0:
                 client_indices = self.clients.sample_clients(1)
                 y_list, y_pred_list = self.evaluation_selected_clients(
                     client_indices, self.server.params)
@@ -235,8 +243,6 @@ class FedXXXLaunch(FedModelBase):
 
                 self.writer.add_scalar("Test mae", mae_, epoch + 1)
                 self.writer.add_scalar("Test rmse", rmse_, epoch + 1)
-
-
 
     # 这里的代码写的很随意 没时间优化了
     # def predict(self, d_triad, resume=False, path=None):

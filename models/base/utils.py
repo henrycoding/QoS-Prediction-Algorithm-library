@@ -1,4 +1,6 @@
+from attr import frozen
 import numpy as np
+from sklearn.metrics import precision_score
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
@@ -6,13 +8,6 @@ from torch.utils.data import DataLoader
 def train_single_epoch_with_dataloader(model, device, dataloader: DataLoader,
                                        opt: Optimizer, loss_fn):
     """训练一个epoch
-
-    Args:
-        dataloader (DataLoader): [description]
-        lr ([type]): [description]
-        opt (Optimizer): [description]
-        loss_fn (_Loss): [description]
-
     Returns: 返回一个epoch产生的loss,np.float64类型
     """
     model.train()
@@ -31,6 +26,24 @@ def train_single_epoch_with_dataloader(model, device, dataloader: DataLoader,
         loss_per_epoch.append(loss.item())
 
     return np.average(loss_per_epoch)
+
+
+def freeze_specific_params(model,alive_layer_name):
+    for name,param in model.named_parameters():
+        if alive_layer_name in name:
+            param.requires_grad = True
+        else:
+            param.requires_grad = False
+
+    # for name,param in model.named_parameters():
+
+    #     if param.requires_grad:
+    #         print(name,param.size())
+    # raise Exception()
+
+def unfreeze_params(model):
+    for name,param in model.named_parameters():
+        param.requires_grad = True
 
 
 def train_mult_epochs_with_dataloader(epochs, *args, **kwargs):

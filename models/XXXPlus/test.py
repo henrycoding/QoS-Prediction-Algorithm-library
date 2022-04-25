@@ -16,7 +16,6 @@ from utils.evaluation import mae, mse, rmse
 from utils.model_util import count_parameters, freeze_random
 
 from .model import FedXXXLaunch, XXXPlusModel
-
 """
 model = XXXPlusModel(user_params, item_params, 48, 128, [128, 64, 32],
                 [4, 4], loss_fn, activation)
@@ -46,19 +45,57 @@ model = FedXXXLaunch(user_params, item_params, 48, 128, [128,64,32], -1,
 
 
 
-
+============================
 model = FedXXXLaunch(user_params, item_params, 48, 128, [128,64,32,16], -1,
                      [3,3,2], activation, train_data, test_data, loss_fn, 5,
                      [144,64], "my_layer", 1)
+FedPer
+
 5% mae:0.394509494304657,mse:1.979100227355957,rmse:1.4068049192428589
+10% [density:0.1,type:rt] Epoch:290 mae:0.362935870885849,mse:1.7823574542999268,rmse:1.3350496292114258
+15% [density:0.15,type:rt] Epoch:200 mae:0.35469549894332886,mse:1.7218421697616577,rmse:1.3121898174285889
 20% Epoch:290 mae:0.3350681960582733,mse:1.5960551500320435,rmse:1.2633507251739502
+
+5% [density:0.05,type:tp] Epoch:270 mae:18.568113327026367,mse:3464.732421875,rmse:58.861976623535156
+10% Epoch:120 mae:16.582380294799805,mse:2846.251220703125,rmse:53.35026931762695
+15%  mae:16.856727600097656,mse:3118.36962890625,rmse:55.84236526489258
+[density:0.2,type:tp] Epoch:160 mae:16.046567916870117,mse:2939.0791015625,rmse:54.21327590942383
+
+# 用上述参数进行非个性化的联邦学习训练
+
+
+5% Epoch:180 mae:0.5083925724029541,mse:2.5896036624908447,rmse:1.609224557876587
+10% [density:0.1,type:rt] Epoch:220 mae:0.4981437921524048,mse:2.5294189453125,rmse:1.5904147624969482
+15% Epoch:240 mae:0.5026066899299622,mse:2.497178792953491,rmse:1.5802464485168457
+[density:0.2,type:rt] Epoch:140 mae:0.47787535190582275,mse:2.226895332336426,rmse:1.4922785758972168
+
+%5 [density:0.05,type:tp] Epoch:90 mae:21.782121658325195,mse:4895.1015625,rmse:69.96500396728516
+10% mae:20.48955535888672,mse:3420.38037109375,rmse:58.48401641845703
+[density:0.15,type:tp] Epoch:150 mae:19.120758056640625,mse:3165.0810546875,rmse:56.25905227661133
+[density:0.2,type:tp] Epoch:110 mae:18.962905883789062,mse:3085.902587890625,rmse:55.550899505615234
+=========================
+
+2022年04月09日
+因为对于tp无法拟合 增加参数量
+model = FedXXXLaunch(user_params, item_params, 48, 128, [256, 128, 64, 32, 16], -1,
+                     [3, 4, 3, 2], activation, train_data, test_data, loss_fn, 5,
+                     [144, 64], "my_layer", 1)
+
+FedRep
+header_epoch 10
+model = FedXXXLaunch(user_params, item_params, 48, 128, [128, 64, 32, 16],
+                        -1, [3, 3, 2], activation, train_data, test_data,
+                        loss_fn, 1, [144, 64], True, 10, "my_layer", 1)
+
 
 
 """
 
 epochs = 3000
-density = 0.2
+density = 0.05
 type_ = "rt"
+
+is_fed = True
 
 
 def data_preprocess(triad,
@@ -105,32 +142,56 @@ item_params = {
     "embedding_dims": [8, 8, 8],
 }
 
-fed_data_preprocess = partial(data_preprocess, is_dtriad=True)
+if is_fed:
 
-train_data = fed_data_preprocess(train, u_info, i_info)
-test_data = fed_data_preprocess(test, u_info, i_info)
+    fed_data_preprocess = partial(data_preprocess, is_dtriad=True)
 
-# train_data = data_preprocess(train, u_info, i_info)
-# test_data = data_preprocess(test, u_info, i_info)
-# train_dataset = ToTorchDataset(train_data)
-# test_dataset = ToTorchDataset(test_data)
-# train_dataloader = DataLoader(train_dataset, batch_size=128)
-# test_dataloader = DataLoader(test_dataset, batch_size=2048)
+    train_data = fed_data_preprocess(train, u_info, i_info)
+    test_data = fed_data_preprocess(test, u_info, i_info)
 
-model = FedXXXLaunch(user_params, item_params, 48, 128, [128,64,32,16], -1,
-                     [3,3,2], activation, train_data, test_data, loss_fn, 5,
-                     [144,64], "my_layer", 1)
-print(f"模型参数:", count_parameters(model))
+    params = {
+        "user_embedding_params": user_params,
+        "item_embedding_params": item_params,
+        "in_size": 48,
+        "output_size": 128,
+        "blocks_size": [256, 128, 64, 32, 16],
+        "batch_size": -1,
+        "deepths": [1, 3, 2, 1],
+        "activation": activation,
+        "d_triad": train_data,
+        "test_d_triad": test_data,
+        "loss_fn": loss_fn,
+        "local_epoch": 5,
+        "linear_layers": [144, 32],
+        "is_personalized": True,
+        "header_epoch": None,
+        "personal_layer": "my_layer",
+        "output_dim": 1,
+        "optimizer": "adam",
+        "use_gpu": True
+    }
 
-model.fit(epochs, 0.0005, 1, f"density:{density},type:{type_}")
+    model = FedXXXLaunch(**params)
+    print(f"模型参数:", count_parameters(model))
 
-# model = XXXPlusModel(user_params, item_params, 48, 128, [128, 64, 32], [4, 4],
-#                      loss_fn, activation)
-# opt = Adam(model.parameters(), lr=0.0005)
-# opt = SGD(model.parameters(), lr=0.01)
+    model.fit(epochs, 0.0005, 10, 1, f"density:{density},type:{type_}")
 
-# model.fit(train_dataloader,
-#           epochs,
-#           opt,
-#           eval_loader=test_dataloader,
-#           save_filename=f"{density}_{type_}")
+else:
+
+    train_data = data_preprocess(train, u_info, i_info)
+    test_data = data_preprocess(test, u_info, i_info)
+    train_dataset = ToTorchDataset(train_data)
+    test_dataset = ToTorchDataset(test_data)
+    train_dataloader = DataLoader(train_dataset, batch_size=128)
+    test_dataloader = DataLoader(test_dataset, batch_size=2048)
+
+    model = XXXPlusModel(user_params, item_params, 48, 128, [128, 64, 32],
+                         [4, 4], loss_fn, activation)
+    opt = Adam(model.parameters(), lr=0.0005)
+    opt = SGD(model.parameters(), lr=0.01)
+
+    model.fit(train_dataloader,
+              epochs,
+              opt,
+              eval_loader=test_dataloader,
+              save_filename=f"{density}_{type_}")

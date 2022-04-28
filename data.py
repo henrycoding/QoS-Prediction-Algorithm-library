@@ -108,7 +108,7 @@ class InfoDataset(DatasetBase):
         return r
 
 
-class MatrixDataset():
+class MatrixDataset:
     def __init__(self) -> None:
         super().__init__()
         self.rtMatrix = np.loadtxt(RT_MATRIX_DIR)
@@ -149,8 +149,7 @@ class MatrixDataset():
     def split_train_test(self,
                          density,
                          nan_symbol=-1,
-                         shuffle=True,
-                         normalize_type=None):
+                         shuffle=True):
         triad_data = self.get_triad(nan_symbol)
 
         if shuffle:

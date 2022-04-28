@@ -24,7 +24,7 @@ from utils.request import send_persentage
 
 
 class ModelBase(object):
-    def __init__(self, model, config: CfgNode, writer: SummaryWriter):
+    def __init__(self, model, config, writer):
         self.model = model
         self.config = config
 
@@ -33,9 +33,6 @@ class ModelBase(object):
 
         # device
         self.device = get_device(self.config)
-
-        # model save name
-        self.model_save_name = ''
 
         # density
         self.density = self.config.density
@@ -78,10 +75,10 @@ class ModelBase(object):
                 user, item, rating = batch[0].to(self.device), \
                                      batch[1].to(self.device), \
                                      batch[2].to(self.device)
+                y_real = rating.reshape(-1, 2)
                 y_pred = self.model(user, item)
-                y_real = rating.reshape(2, -1)
-                loss_rt = self.loss_fn(y_pred[0].squeeze(1), y_real[0])
-                loss_tp = self.loss_fn(y_pred[1].squeeze(1), y_real[1])
+                loss_rt = self.loss_fn(y_pred[:, 0], y_real[:, 0])
+                loss_tp = self.loss_fn(y_pred[:, 1], y_real[:, 1])
                 loss = 0.95 * loss_rt + 0.05 * loss_tp
                 eval_total_loss_rt += loss_rt.item()
                 eval_total_loss_tp += loss_tp.item()
@@ -141,10 +138,10 @@ class ModelBase(object):
                                         batch[1].to(self.device), \
                                         batch[2].to(self.device)
                 self.opt.zero_grad()
-                y_real = ratings.reshape(2, -1)
+                y_real = ratings.reshape(-1, 2)
                 y_pred = self.model(users, items)
-                loss_rt = self.loss_fn(y_pred[0].squeeze(1), y_real[0])
-                loss_tp = self.loss_fn(y_pred[1].squeeze(1), y_real[1])
+                loss_rt = self.loss_fn(y_pred[:, 0], y_real[:, 0])
+                loss_tp = self.loss_fn(y_pred[:, 1], y_real[:, 1])
                 loss = 0.95 * loss_rt + 0.05 * loss_tp
                 loss.backward()
                 self.opt.step()
@@ -163,9 +160,6 @@ class ModelBase(object):
 
     # 预测
     def predict(self, test_loader):
-        y_pred_list = []
-        y_list = []
-
         # select the model with the least loss
         ckpt = self.saved_model_ckpt[-1]
 
@@ -183,11 +177,11 @@ class ModelBase(object):
                 user, item, rating = batch[0].to(self.device), \
                                      batch[1].to(self.device), \
                                      batch[2].to(self.device)
-                y_real = rating.reshape(2, -1)
+                y_real = rating.reshape(-1, 2)
                 y_pred = self.model(user, item)
                 for i in range(2):
-                    real[i].extend(y_real[i, :].tolist())
-                    pred[i].extend(y_pred[i].tolist())
+                    real[i].extend(y_real[:, i].tolist())
+                    pred[i].extend(y_pred[:, i].tolist())
 
         return real, pred
 

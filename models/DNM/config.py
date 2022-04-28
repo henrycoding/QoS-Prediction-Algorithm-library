@@ -7,21 +7,19 @@ _C.use_gpu = True
 _C.device_id = 0
 
 _C.density = 0.05
-_C.embedding_dim = 8
-_C.perception_layers = [16, 32]
-_C.task_specific_layers_rt = [32, 16, 8]
-_C.task_specific_layers_tp = [32, 16, 8]
-_C.user_enable_columns = ["[User ID]"]
-# _C.user_enable_columns = ["[User ID]", "[Country]", "[AS]"]
-_C.service_enable_columns = ["[Service ID]"]
-# _C.service_enable_columns = ["[Service ID]", "[Country]", "[AS]"]
+_C.embedding_dim = 50
+_C.perception_layers = [100, 128]
+_C.task_specific_layers_rt = [128, 64]
+_C.task_specific_layers_tp = [128, 64]
+_C.user_enable_columns = ["[User ID]", "[Country]", "[AS]"]
+_C.service_enable_columns = ["[Service ID]", "[Country]", "[AS]"]
 
 _C.batch_size = 128
 _C.num_epochs = 200
 _C.loss_fn = 'L1'
 _C.optimizer = 'Adam'
 _C.lr = 0.001
-_C.weight_decay = 0.
+_C.weight_decay = 0
 
 _C.SYSTEM = CN()
 _C.SYSTEM.USE_GPU = True

@@ -37,7 +37,7 @@ from utils.request import send_model_result
 
 # 公用模型测试框架
 class ModelTest:
-    def __init__(self, model_class, config: CfgNode) -> None:
+    def __init__(self, model_class, config) -> None:
         self.config = config
 
         # model
@@ -73,7 +73,7 @@ class ModelTest:
         return r
 
     def run(self) -> None:
-        # freeze_random()  # frozen random number
+        freeze_random()  # frozen random number
         self.writer = TensorBoardTool(self.config).run()
 
         self.config.defrost()

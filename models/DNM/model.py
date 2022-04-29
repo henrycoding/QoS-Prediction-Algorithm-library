@@ -47,6 +47,10 @@ class DNM(nn.Module):
         self.affine_output_tp = nn.Linear(layers[-1], 1)
         self.logistic_tp = nn.Sigmoid()
 
+        for m in self.modules():
+            if isinstance(m, nn.Embedding):
+                nn.init.normal_(m.weight)
+
     def forward(self, user_indices, service_indices):
         uid_embedding = self.UID_embedding(user_indices[:, 0])
         ur_embedding = self.UR_embedding(user_indices[:, 1])

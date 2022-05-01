@@ -95,7 +95,7 @@ epochs = 3000
 density = 0.05
 type_ = "rt"
 
-is_fed = True
+is_fed = False
 
 
 def data_preprocess(triad,
@@ -185,10 +185,12 @@ else:
     train_dataloader = DataLoader(train_dataset, batch_size=128)
     test_dataloader = DataLoader(test_dataset, batch_size=2048)
 
-    model = XXXPlusModel(user_params, item_params, 48, 128, [128, 64, 32],
-                         [4, 4], loss_fn, activation)
+
+    model = XXXPlusModel(user_params, item_params, 48, 128, [256, 128, 64, 32, 16],
+                         [1,2,2,1], loss_fn, activation, [144,32])
+
     opt = Adam(model.parameters(), lr=0.0005)
-    opt = SGD(model.parameters(), lr=0.01)
+    # opt = SGD(model.parameters(), lr=0.01)
 
     model.fit(train_dataloader,
               epochs,

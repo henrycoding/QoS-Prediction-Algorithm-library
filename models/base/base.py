@@ -98,45 +98,59 @@ class ModelBase(object):
             if (epoch + 1) % 10 == 0:
                 if eval_ == True:
                     assert eval_loader is not None, "Please offer eval dataloader"
-                    self.model.eval()
-                    with torch.no_grad():
-                        for batch_id, batch in tqdm(enumerate(eval_loader)):
-                            user, item, rating = batch[0].to(self.device), \
-                                                 batch[1].to(self.device), \
-                                                 batch[2].to(self.device)
-                            y_pred = self.model(user, item)
-                            y_real = rating.reshape(-1, 1)
-                            loss = self.loss_fn(y_pred, y_real)
-                            eval_total_loss += loss.item()
-                        loss_per_epoch = eval_total_loss / len(eval_loader)
 
-                        if best_loss is None:
-                            best_loss = loss_per_epoch
-                            is_best = True
-                        elif loss_per_epoch < best_loss:
-                            best_loss = loss_per_epoch
-                            is_best = True
-                        else:
-                            is_best = False
-                        eval_loss_list.append(loss_per_epoch)
-                        self.logger.info(f"Test loss: {loss_per_epoch}")
-                        self.writer.add_scalar("Eval loss", loss_per_epoch,
-                                               epoch)
-                        # 保存最优的loss
-                        if is_best:
-                            ckpt = {
-                                "model": self.model.state_dict(),
-                                "epoch": epoch + 1,
-                                "optim": optimizer.state_dict(),
-                                "best_loss": best_loss
-                            }
-                        # else:
-                        #     ckpt = {}
-                        save_checkpoint(
-                            ckpt, is_best,
-                            f"output/{self.name}/{self.date}/saved_model",
-                            f"{save_filename}_loss_{best_loss:.4f}.ckpt")
-                        self.saved_model_ckpt.append(ckpt)
+                    y_list,y_pred_list = self.predict(eval_loader)
+                    mae_ = mae(y_list,y_pred_list)
+                    mse_ = mse(y_list,y_pred_list)
+                    rmse_ = rmse(y_list,y_pred_list)
+
+                    self.logger.info(
+                        f"[{save_filename}] Epoch:{epoch+1} mae:{mae_},mse:{mse_},rmse:{rmse_}"
+                    )
+
+                    self.writer.add_scalar("Test mae",mae_,epoch + 1)
+                    self.writer.add_scalar("Test rmse",rmse_,epoch + 1)
+
+                    # 下面的代码暂时不用
+                    # self.model.eval()
+                    # with torch.no_grad():
+                    #     for batch_id, batch in tqdm(enumerate(eval_loader)):
+                    #         user, item, rating = batch[0].to(self.device), \
+                    #                              batch[1].to(self.device), \
+                    #                              batch[2].to(self.device)
+                    #         y_pred = self.model(user, item)
+                    #         y_real = rating.reshape(-1, 1)
+                    #         loss = self.loss_fn(y_pred, y_real)
+                    #         eval_total_loss += loss.item()
+                    #     loss_per_epoch = eval_total_loss / len(eval_loader)
+
+                    #     if best_loss is None:
+                    #         best_loss = loss_per_epoch
+                    #         is_best = True
+                    #     elif loss_per_epoch < best_loss:
+                    #         best_loss = loss_per_epoch
+                    #         is_best = True
+                    #     else:
+                    #         is_best = False
+                    #     eval_loss_list.append(loss_per_epoch)
+                    #     self.logger.info(f"Test loss: {loss_per_epoch}")
+                    #     self.writer.add_scalar("Eval loss", loss_per_epoch,
+                    #                            epoch)
+                    #     # 保存最优的loss
+                    #     if is_best:
+                    #         ckpt = {
+                    #             "model": self.model.state_dict(),
+                    #             "epoch": epoch + 1,
+                    #             "optim": optimizer.state_dict(),
+                    #             "best_loss": best_loss
+                    #         }
+                    #     # else:
+                    #     #     ckpt = {}
+                    #     save_checkpoint(
+                    #         ckpt, is_best,
+                    #         f"output/{self.name}/{self.date}/saved_model",
+                    #         f"{save_filename}_loss_{best_loss:.4f}.ckpt")
+                    #     self.saved_model_ckpt.append(ckpt)
 
                 elif save_model:
                     ckpt = {

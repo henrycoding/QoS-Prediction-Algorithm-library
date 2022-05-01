@@ -5,10 +5,10 @@ from .resnet_utils import *
 
 
 class Linear(nn.Module):
-    def __init__(self, in_size, out_size, activation):
+    def __init__(self, in_size, out_size, activation, drop_out=0.3):
         super().__init__()
         self.fc_layer = nn.Sequential(nn.Linear(in_size, out_size),
-                                      activation())
+                                      nn.Dropout(drop_out), activation())
 
     def forward(self, x):
         x = self.fc_layer(x)

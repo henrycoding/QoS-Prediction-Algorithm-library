@@ -4,7 +4,6 @@ from typing import Dict, List
 
 import numpy as np
 import torch
-from sympy import EX
 from tqdm import tqdm
 
 from utils.model_util import use_optimizer

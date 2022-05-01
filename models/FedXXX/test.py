@@ -47,6 +47,9 @@ epochs = 3000
 desnity = 0.05
 type_ = "rt"
 
+
+
+
 u_enable_columns = ["[User ID]", "[Country]", "[AS]"]
 i_enable_columns = ["[Service ID]", "[Country]", "[AS]"]
 

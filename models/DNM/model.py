@@ -89,14 +89,16 @@ class DNM(nn.Module):
             vector_rt = layer(vector_rt)
             vector_rt = F.relu(vector_rt)
         logits_rt = self.affine_output_rt(vector_rt)
-        rating_rt = self.logistic_rt(logits_rt)
+        # rating_rt = self.logistic_rt(logits_rt)
+        rating_rt = logits_rt
 
         vector_tp = vector
         for layer in self.task_specific_layers_tp:
             vector_tp = layer(vector_tp)
             vector_tp = F.relu(vector_tp)
         logits_tp = self.affine_output_tp(vector_tp)
-        rating_tp = self.logistic_tp(logits_tp)
+        # rating_tp = self.logistic_tp(logits_tp)
+        rating_tp = logits_tp
 
         results = torch.cat([rating_rt, rating_tp], dim=-1)
         return results

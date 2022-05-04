@@ -79,7 +79,7 @@ class ModelBase(object):
                 y_pred = self.model(user, item)
                 loss_rt = self.loss_fn(y_pred[:, 0], y_real[:, 0])
                 loss_tp = self.loss_fn(y_pred[:, 1], y_real[:, 1])
-                loss = 0.95 * loss_rt + 0.05 * loss_tp
+                loss = 0.9 * loss_rt + 0.05 * loss_tp
                 eval_total_loss_rt += loss_rt.item()
                 eval_total_loss_tp += loss_tp.item()
                 eval_total_loss += loss.item()
@@ -137,12 +137,12 @@ class ModelBase(object):
                 users, items, ratings = batch[0].to(self.device), \
                                         batch[1].to(self.device), \
                                         batch[2].to(self.device)
-                self.opt.zero_grad()
                 y_real = ratings.reshape(-1, 2)
                 y_pred = self.model(users, items)
                 loss_rt = self.loss_fn(y_pred[:, 0], y_real[:, 0])
                 loss_tp = self.loss_fn(y_pred[:, 1], y_real[:, 1])
                 loss = 0.95 * loss_rt + 0.05 * loss_tp
+                self.opt.zero_grad()
                 loss.backward()
                 self.opt.step()
 

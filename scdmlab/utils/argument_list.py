@@ -7,7 +7,6 @@ general_arguments = [
     'checkpoint_dir',
     'show_progress',
     'dataset_save_path',
-
     'config_file',
 ]
 

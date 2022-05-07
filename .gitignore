@@ -39,7 +39,7 @@ lib64/
 parts/
 sdist/
 var/
-logs/
+log/
 runs/
 wheels/
 output/

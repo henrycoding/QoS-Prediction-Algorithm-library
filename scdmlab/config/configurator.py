@@ -8,7 +8,7 @@ import torch
 from logging import getLogger
 from scdmlab.config import BASE_PATH, ROOT_PATH
 from scdmlab.utils import get_model, general_arguments, training_arguments, evaluation_arguments, dataset_arguments, \
-    set_color, ModelType
+    set_color, ModelType, InputType
 
 
 class Config(object):
@@ -154,7 +154,11 @@ class Config(object):
                     self.parameters['Dataset'] += [
                         key for key in config_dict.keys() if key not in self.parameters['Dataset']
                     ]
+
         self.internal_config_dict['MODEL_TYPE'] = model_class.type
+
+        # TODO
+        self.internal_config_dict['INPUT_TYPE'] = InputType.MATRIX
 
         if self.internal_config_dict['MODEL_TYPE'] == ModelType.GENERAL:
             pass

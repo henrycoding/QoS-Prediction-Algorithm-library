@@ -29,7 +29,7 @@ from scdmlab.utils import InputType
 
 
 class NeuMF(GeneralModel):
-    input_type = InputType.POINTWISE
+    input_type = InputType.MATRIX
 
     def __init__(self, config, dataset):
         super(NeuMF, self).__init__(config, dataset)

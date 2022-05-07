@@ -4,35 +4,27 @@ import importlib
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-from scdmlab.utils import ModelType
+from scdmlab.utils import ModelType, InputType
 
 
 def create_dataset(config):
-    dataset_module = importlib.import_module('scdmlab.data.dataset')  # import all modules in the dataset directory
-    model_type = config['MODEL_TYPE']
+    dataset_module = importlib.import_module('scdmlab.data.dataset')
+    input_type = config['INPUT_TYPE']
     type2class = {
-        ModelType.GENERAL: 'MatrixDataset',
-        ModelType.CONTEXT: 'MatrixDataset',
+        InputType.MATRIX: 'MatrixDataset',
+        InputType.INFO: 'InfoDataset',
     }
-    dataset_class = getattr(dataset_module, type2class[model_type])
-
-    default_file = os.path.join(config['checkpoint_dir'], f'{config["dataset"]}-{dataset_class.__name__}.pth')
-    file = config['dataset_save_path'] or default_file
-    # if os.path.exists(file):
-    #     with open(file, 'rb') as f:
-    #         dataset = pickle.load(f)
-    #     dataset_args_unchanged = True
-    #     for arg in dataset_arguments + ['seed', 'repeatable']:
-
+    dataset_class = getattr(dataset_module, type2class[input_type])
     dataset = dataset_class(config)
     return dataset
 
 
-# def data_preparation(config, dataset):
-#     dataloaders = load_split_dataloaders(config)
-
-def data_preparation(config, dataset, density):
-    train_data, test_data = dataset.split_train_test(density)
+def data_preparation(config, dataset):
+    model_type = config['model_type']
+    density = config['current_density']
+    if model_type != ModelType.MULTITASK:
+        dataset_type = config['current_dataset_type']
+        train_data, test_data = dataset.build(density, dataset_type)
 
     train_dataset = ToTorchDataset(train_data)
     test_dataset = ToTorchDataset(test_data)

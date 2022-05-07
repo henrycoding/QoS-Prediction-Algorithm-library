@@ -19,21 +19,22 @@ def run_scdmlab(model=None, dataset=None, config_file_list=None, config_dict=Non
     logger = getLogger()
     logger.info(config)
 
-    # dataset filtering
+    # dataset create
     dataset = create_dataset(config)
 
-    # for type_ in config['dataset_type']:
-    #     # dataset preparing
-    #     dataset = create_dataset(config)
-    #     for density in config['density']:
-    #         # dataset splitting
-    #         train_dataloader, test_dataloader = data_preparation(config, dataset, density)
-    #
-    #         # model loading and initialization
-    #         model = get_model(config['model'])(config, train_dataloader).to(config['device'])
+    # TODO 检查是否有这两个属性，以及将属性变为list类型
+    for density in config['density']:
+        for dataset_type in config['dataset_type']:
+            config['current_density'] = density
+            config['current_dataset_type'] = dataset_type
+            train_data, test_data = data_preparation(config, dataset)
+
+    # model loading and initialization
+    init_seed(config['seed'], config['reproducibility'])
+    model = get_model(config['model'])(config)
 
     # trainer loading and initialization
-    # trainer = get_trainer(config['MODEL_TYPE'], config['model'])(config, model)
+    trainer = get_trainer(config['MODEL_TYPE'], config['model'])(config, model)
 
     # model loading and initalization
 

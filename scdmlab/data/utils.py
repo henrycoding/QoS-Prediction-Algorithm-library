@@ -20,19 +20,19 @@ def create_dataset(config):
 
 
 def data_preparation(config, dataset):
-    model_type = config['model_type']
+    model_type = config['MODEL_TYPE']
     density = config['current_density']
-    if model_type != ModelType.MULTITASK:
+    if model_type == ModelType.GENERAL:
         dataset_type = config['current_dataset_type']
         train_data, test_data = dataset.build(density, dataset_type)
 
-    train_dataset = ToTorchDataset(train_data)
-    test_dataset = ToTorchDataset(test_data)
+        train_dataset = ToTorchDataset(train_data)
+        test_dataset = ToTorchDataset(test_data)
 
-    train_dataloader = DataLoader(train_dataset, config['batch_size'])
-    test_dataloader = DataLoader(test_dataset, config['batch_size'])
+        train_dataloader = DataLoader(train_dataset, config['batch_size'])
+        test_dataloader = DataLoader(test_dataset, config['batch_size'])
 
-    return train_dataloader, test_dataloader
+        return train_dataloader, test_dataloader
 
 
 class ToTorchDataset(Dataset):

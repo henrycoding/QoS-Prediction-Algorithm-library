@@ -14,11 +14,7 @@ from scdmlab.utils import get_model, general_arguments, training_arguments, eval
 class Config(object):
     def __init__(self, model=None, dataset=None, config_file_list=None, config_dict=None):
         self._init_parameters_category()
-        self.file_config_dict = self._load_config_files(config_file_list)
-        self.variable_config_dict = self._load_variable_config_dict(config_dict)
-        self.cmd_config_dict = self._load_cmd_line()
-        self._merge_external_config_dict()
-
+        self._merge_external_config_dict(config_file_list, config_dict)
         self.model, self.model_class, self.dataset = self._get_model_and_dataset(model, dataset)
         self._load_internal_config_dict(self.model, self.model_class, self.dataset)
         self.final_config_dict = self._get_final_config_dict()
@@ -28,9 +24,9 @@ class Config(object):
     def _init_parameters_category(self):
         self.parameters = dict()
         self.parameters['General'] = general_arguments
+        self.parameters['Dataset'] = dataset_arguments
         self.parameters['Training'] = training_arguments
         self.parameters['Evaluation'] = evaluation_arguments
-        self.parameters['Dataset'] = dataset_arguments
 
     def _convert_config_dict(self, config_dict):
         """This function convert the str parameters to their original type.
@@ -92,11 +88,16 @@ class Config(object):
         cmd_config_dict = self._convert_config_dict(cmd_config_dict)
         return cmd_config_dict
 
-    def _merge_external_config_dict(self):
+    def _merge_external_config_dict(self, config_file_list, config_dict):
+        file_config_dict = self._load_config_files(config_file_list)
+        variable_config_dict = self._load_variable_config_dict(config_dict)
+        cmd_config_dict = self._load_cmd_line()
+
         external_config_dict = dict()
-        external_config_dict.update(self.file_config_dict)
-        external_config_dict.update(self.variable_config_dict)
-        external_config_dict.update(self.cmd_config_dict)
+        external_config_dict.update(file_config_dict)
+        external_config_dict.update(variable_config_dict)
+        external_config_dict.update(cmd_config_dict)
+
         self.external_config_dict = external_config_dict
 
     def _get_model_and_dataset(self, model, dataset):

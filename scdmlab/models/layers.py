@@ -5,7 +5,6 @@ import torch.nn.functional as fn
 from torch.nn.init import normal_
 
 
-
 def activation_layer(activation_name='relu'):
     if activation_name is None:
         activation = None
@@ -37,8 +36,8 @@ class MLPLayers(nn.Module):
         self.use_bn = bn
         self.init_method = init_method
 
-        # mlp_modules = []
-        mlp_modules = nn.ModuleList()
+        mlp_modules = []
+        # mlp_modules = nn.ModuleList()
         for idx, (input_size, output_size) in enumerate(zip(self.layers[:-1], self.layers[1:])):
             mlp_modules.append(nn.Dropout(p=self.drouput))
             mlp_modules.append(nn.Linear(input_size, output_size))
@@ -48,6 +47,7 @@ class MLPLayers(nn.Module):
             if activation_func is not None:
                 mlp_modules.append(activation_func)
 
+        self.mlp_layers = nn.Sequential(*mlp_modules)
         if self.init_method is not None:
             self.apply(self.init_weights)
 

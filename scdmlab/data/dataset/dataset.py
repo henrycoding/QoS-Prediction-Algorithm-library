@@ -42,11 +42,16 @@ class Dataset:
         triad_data = np.array(triad_data)
         return triad_data
 
-    def _split_train_test(self, data, density, shuffle=True, nan_symbol=-1):
+    def _split_train_test(self, data, density, shuffle=True):
         if shuffle:
             np.random.shuffle(data)
 
-        # num = int()
+        train_num = int(len(data) * density)
+        train_data, test_data = data[:train_num], data[train_num:]
+        return train_data, test_data
+
+    def build(self, *args):
+        raise NotImplementedError('Method [next] should be implemented.')
 
     # TODO 无法保存
     def save(self):

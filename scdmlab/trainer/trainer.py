@@ -72,10 +72,11 @@ class GeneralTrainer(AbstractTrainer):
                 desc=set_color(f"Train {epoch_idx:>5}", 'pink'),
             ) if show_progress else train_data
         )
-        for batch_idx, interaction in enumerate(iter_data):
-            interaction = interaction.to(self.device)
+        for batch_idx, batched_data in enumerate(iter_data):
+            users, services, ratings = batched_data[0].to(self.device), batched_data[1].to(self.device), batched_data[
+                2].to(self.device)
             self.optimizer.zero_grad()
-            losses = loss_func(interaction)
+            losses = loss_func(users, services, ratings)
             if isinstance(losses, tuple):
                 # TODO
                 pass
@@ -115,3 +116,15 @@ class GeneralTrainer(AbstractTrainer):
         for epoch_idx in range(self.epochs):
             train_loss = self._train_epoch(train_data, epoch_idx, show_progress=show_progress)
             self.train_loss_dict[epoch_idx] = sum(train_loss) if isinstance(train_loss, tuple) else train_loss
+
+    @torch.no_grad()
+    def evaluate(self, eval_data, load_best_model=True, model_file=None, show_progress=False):
+        if not eval_data:
+            return
+
+        if load_best_model:
+            checkpoint_file = model_file or self.saved_model_file
+            checkpoint = torch.load(checkpoint_file)
+            self.model.load_state_dict(checkpoint['state_dict'])
+
+        self.model.eval()

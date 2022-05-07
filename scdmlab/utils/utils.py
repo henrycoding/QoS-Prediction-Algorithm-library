@@ -5,6 +5,8 @@ import random
 import numpy as np
 import torch
 
+from scdmlab.utils.enum_type import ModelType
+
 
 def get_local_time():
     r"""Get current time
@@ -53,6 +55,14 @@ def get_model(model_name: str):
         raise ValueError('`model_name` [{}] is not the name of an existing model.'.format(model_name))
     model_class = getattr(model_module, model_name)
     return model_class
+
+
+def get_trainer(model_type, model_name):
+    try:
+        return getattr(importlib.import_module('scdmlab.trainer'), model_name + 'Trainer')
+    except AttributeError:
+        if model_type == ModelType.GENERAL:
+            return getattr(importlib.import_module('scdmlab.trainer'), 'GeneralTrainer')
 
 
 def init_seed(seed: int, reproducibility: bool) -> None:

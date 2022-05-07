@@ -19,6 +19,7 @@ class MatrixDataset(Dataset):
         self.logger.debug(set_color(f'Loading {self.__class__} from scratch.', 'green'))
         self.rt_matrix = self._load_qos_matrix('rt')
         self.tp_Matrix = self._load_qos_matrix('tp')
+        self.row_num, self.col_num = self.rt_matrix.shape
 
     def build(self, density, dataset_type):
         if dataset_type == 'rt':
@@ -27,3 +28,6 @@ class MatrixDataset(Dataset):
             data = self._get_triad(self.tp_Matrix)
         else:
             raise ValueError(f'{dataset_type} not support')
+
+        train_data, test_data = self._split_train_test(data, density)
+        return train_data, test_data

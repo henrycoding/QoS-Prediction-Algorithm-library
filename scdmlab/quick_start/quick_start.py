@@ -5,7 +5,7 @@ from logging import getLogger
 
 from scdmlab.config import Config
 from scdmlab.data import create_dataset, data_preparation
-from scdmlab.utils import init_logger, get_model, init_seed
+from scdmlab.utils import init_logger, get_model, init_seed, get_trainer
 
 
 def run_scdmlab(model=None, dataset=None, config_file_list=None, config_dict=None, saved=True):
@@ -22,19 +22,24 @@ def run_scdmlab(model=None, dataset=None, config_file_list=None, config_dict=Non
     # dataset create
     dataset = create_dataset(config)
 
-    # TODO 检查是否有这两个属性，以及将属性变为list类型
+    # TODO 将属性变为list类型
     for density in config['density']:
         for dataset_type in config['dataset_type']:
             config['current_density'] = density
             config['current_dataset_type'] = dataset_type
             train_data, test_data = data_preparation(config, dataset)
 
-    # model loading and initialization
-    init_seed(config['seed'], config['reproducibility'])
-    model = get_model(config['model'])(config)
+            # model loading and initialization
+            init_seed(config['seed'], config['reproducibility'])
+            model = get_model(config['model'])(config, dataset).to(config['device'])
+            logger.info(model)
+
+            trainer = get_trainer(config['MODEL_TYPE'], config['model'])(config, model)
+
+            trainer.fit(train_data, test_data, saved=saved, show_progress=config['show_progress'])
 
     # trainer loading and initialization
-    trainer = get_trainer(config['MODEL_TYPE'], config['model'])(config, model)
+    # trainer = get_trainer(config['MODEL_TYPE'], config['model'])(config, model)
 
     # model loading and initalization
 

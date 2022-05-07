@@ -10,6 +10,10 @@ general_arguments = [
     'config_file',
 ]
 
+dataset_arguments = [
+    'field_separator', 'seq_separator',
+]
+
 training_arguments = [
     'epochs', 'train_batch_size',
     'learner', 'learning_rate',
@@ -24,8 +28,4 @@ evaluation_arguments = [
     'metrics', 'topk', 'valid_metric', 'valid_metric_bigger',
     'eval_batch_size',
     'metric_decimal_place',
-]
-
-dataset_arguments = [
-    'field_separator', 'seq_separator',
 ]

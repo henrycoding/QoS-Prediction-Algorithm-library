@@ -55,7 +55,6 @@ class NeuMF(nn.Module):
             self.fc_layers.append(nn.Linear(in_size, out_size))
 
         self.affine_output = nn.Linear(self.latent_dim_gmf + self.layers[-1], 1)
-        self.logistic = nn.Sigmoid()
 
     def forward(self, user_indices, item_indices):
         user_embedding_gmf = self.embedding_user_gmf(user_indices)
@@ -71,52 +70,9 @@ class NeuMF(nn.Module):
             mlp_vec = F.relu(mlp_vec)
 
         vector = torch.cat([gmf_vec, mlp_vec], dim=-1)
-        logits = self.affine_output(vector)
-        rating = self.logistic(logits)
+        rating = self.affine_output(vector)
 
         return rating
-
-    def load_pretrain_weights(self):
-        density = self.config.TRAIN.DENSITY
-
-        gmf_model_dir = absolute(self.config.TRAIN.GMF_MODEL_DIR.format(density=density))
-        mlp_model_dir = absolute(self.config.TRAIN.MLP_MODEL_DIR.format(density=density))
-
-        # FIXME 加载预训练模型是否需要放到GPU上
-        # device = get_device(config)
-        # gmf_model.to(device)
-
-        gmf_ckpt = load_checkpoint(gmf_model_dir)
-        gmf_model_config = get_gmf_config()
-        gmf_model_config.defrost()
-        gmf_model_config.TRAIN.NUM_USERS = self.config.TRAIN.NUM_USERS
-        gmf_model_config.TRAIN.NUM_ITEMS = self.config.TRAIN.NUM_ITEMS
-        gmf_model_config.TRAIN.DENSITY = self.config.TRAIN.DENSITY
-        gmf_model_config.freeze()
-        gmf_model = GMF(gmf_model_config)
-        gmf_model.load_state_dict(gmf_ckpt['model'])
-
-        self.embedding_user_gmf.weight.data = gmf_model.embedding_user.weight.data
-        self.embedding_item_gmf.weight.data = gmf_model.embedding_item.weight.data
-
-        mlp_ckpt = load_checkpoint(mlp_model_dir)
-        mlp_model_config = get_mlp_config()
-        mlp_model_config.defrost()
-        mlp_model_config.TRAIN.NUM_USERS = self.config.TRAIN.NUM_USERS
-        mlp_model_config.TRAIN.NUM_ITEMS = self.config.TRAIN.NUM_ITEMS
-        mlp_model_config.TRAIN.DENSITY = self.config.TRAIN.DENSITY
-        mlp_model_config.freeze()
-        mlp_model = MLP(mlp_model_config)
-        mlp_model.load_state_dict(mlp_ckpt['model'])
-
-        self.embedding_user_mlp.weight.data = mlp_model.embedding_user.weight.data
-        self.embedding_item_mlp.weight.data = mlp_model.embedding_item.weight.data
-        for idx in range(len(self.fc_layers)):
-            self.fc_layers[idx].weight.data = mlp_model.fc_layers[idx].weight.data
-
-        self.affine_output.weight.data = 0.5 * torch.cat(
-            [gmf_model.affine_output.weight.data, mlp_model.affine_output.weight.data], dim=-1)
-        self.affine_output.bias.data = 0.5 * (gmf_model.affine_output.bias.data + mlp_model.affine_output.bias.data)
 
 
 class NeuMFModel(ModelBase):

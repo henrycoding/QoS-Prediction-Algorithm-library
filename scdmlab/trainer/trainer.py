@@ -7,7 +7,7 @@ import torch
 import torch.optim as optim
 from torch.nn.utils.clip_grad import clip_grad_norm_
 
-from scdmlab.utils import get_local_time, set_color, get_gpu_usage
+from scdmlab.utils import get_local_time, set_color, get_gpu_usage, get_tensorboard
 
 
 class AbstractTrainer(object):
@@ -27,9 +27,17 @@ class GeneralTrainer(AbstractTrainer):
         super(GeneralTrainer, self).__init__(config, model)
 
         self.logger = getLogger()
+        self.tensorboard = get_tensorboard(self.logger)
+        self.gpu_available = torch.cuda.is_available() and config['use_gpu']
+        self.device = config['device']
+        self.checkpoint_dir = config['checkpoint_dir']
+        saved_model_file = '{}-{}.pth'.format(self.config['model'], get_local_time())
+        self.saved_model_file = os.path.join(self.checkpoint_dir, saved_model_file)
+        self.train_loss_dict = dict()
 
         self.epochs = config['epochs']
         self.eval_step = min(config['eval_step'], self.epochs)
+        self.stopping_step = config['stopping_step']
         self.clip_grad_norm = config['clip_grad_norm']
 
         # optimizer
@@ -38,19 +46,11 @@ class GeneralTrainer(AbstractTrainer):
         self.weight_decay = config['weight_decay']
         self.optimizer = self._build_optimizer()
 
-        self.gpu_available = torch.cuda.is_available() and config['use_gpu']
-        self.device = config['device']
-        self.checkpoint_dir = config['checkpoint_dir']
-
-        saved_model_file = '{}-{}.pth'.format(self.config['model'], get_local_time())
-        self.saved_model_file = os.path.join(self.checkpoint_dir, saved_model_file)
-        self.train_loss_dict = dict()
-
     def _build_optimizer(self, **kwargs):
-        params = kwargs.pop('params', self.model.parameters())
-        learner = kwargs.pop('learner', self.learner)
-        learning_rate = kwargs.pop('learning_rate', self.learning_rate)
-        weight_decay = kwargs.pop('weight_decay', self.weight_decay)
+        params = kwargs.get('params', self.model.parameters())
+        learner = kwargs.get('learner', self.learner)
+        learning_rate = kwargs.get('learning_rate', self.learning_rate)
+        weight_decay = kwargs.get('weight_decay', self.weight_decay)
 
         if learner.lower() == 'adam':
             optimizer = optim.Adam(params, lr=learning_rate, weight_decay=weight_decay)
@@ -76,26 +76,65 @@ class GeneralTrainer(AbstractTrainer):
             users, services, ratings = batched_data[0].to(self.device), batched_data[1].to(self.device), batched_data[
                 2].to(self.device)
             self.optimizer.zero_grad()
-            losses = loss_func(users, services, ratings)
-            if isinstance(losses, tuple):
-                # TODO
-                pass
-            else:
-                loss = losses
-                total_loss = losses.item() if total_loss is None else total_loss + losses.item()
+            loss = loss_func(users, services, ratings)
+            total_loss = loss.item() if total_loss is None else total_loss + loss.item()
             self._check_nan(loss)
             loss.backward()
-            # TODO 梯度裁剪
             if self.clip_grad_norm:
                 clip_grad_norm_(self.model.parameters(), **self.clip_grad_norm)
             self.optimizer.step()
+
             if self.gpu_available and show_progress:
                 iter_data.set_postfix_str(set_color('GPU RAM: ' + get_gpu_usage(self.device), 'yellow'))
+
         return total_loss
+
+    def _valid_epoch(self, valid_data, show_progress=False):
+        valid_result = self.evaluate()
+
+    def _save_checkpoint(self, epoch, verbose=True, **kwargs):
+        r"""Store the model parameters information and training information.
+
+        Args:
+            epoch (int): the current epoch id
+
+        """
+        saved_model_file = kwargs.pop('saved_model_file', self.saved_model_file)
+        state = {
+            'config': self.config,
+            'epoch': epoch,
+            'cur_step': self.cur_step,
+            'best_valid_score': self.best_valid_score,
+            'state_dict': self.model.state_dict(),
+            'other_parameter': self.model.other_parameter(),
+            'optimizer': self.optimizer.state_dict(),
+        }
+        torch.save(state, saved_model_file)
+        if verbose:
+            self.logger.info(set_color('Saving current', 'blue') + f': {saved_model_file}')
 
     def _check_nan(self, loss):
         if torch.isnan(loss):
             raise ValueError('Training loss is nan')
+
+    def _generate_train_loss_output(self, epoch_idx, s_time, e_time, losses):
+        des = self.config['loss_decimal_place'] or 4
+        train_loss_output = (set_color('epoch %d training', 'green') + ' [' + set_color('time', 'blue') +
+                             ': %.2fs, ') % (epoch_idx, e_time - s_time)
+        if isinstance(losses, tuple):
+            des = (set_color('train_loss%d', 'blue') + ': %.' + str(des) + 'f')
+            train_loss_output += ', '.join(des % (idx + 1, loss) for idx, loss in enumerate(losses))
+        else:
+            des = '%.' + str(des) + 'f'
+            train_loss_output += set_color('train loss', 'blue') + ': ' + des % losses
+        return train_loss_output + ']'
+
+    def _add_train_loss_to_tensorboard(self, epoch_idx, losses, tag='Loss/Train'):
+        if isinstance(losses, tuple):
+            for idx, loss in enumerate(losses):
+                self.tensorboard.add_scalar(tag + str(idx), loss, epoch_idx)
+        else:
+            self.tensorboard.add_scalar(tag, losses, epoch_idx)
 
     def fit(self, train_data, valid_data=None, verbose=True, saved=True, show_progress=False):
         """Train the model based on the train data and the valid data.
@@ -114,8 +153,23 @@ class GeneralTrainer(AbstractTrainer):
         """
 
         for epoch_idx in range(self.epochs):
+            training_start_time = time()
             train_loss = self._train_epoch(train_data, epoch_idx, show_progress=show_progress)
-            self.train_loss_dict[epoch_idx] = sum(train_loss) if isinstance(train_loss, tuple) else train_loss
+            self.train_loss_dict[epoch_idx] = train_loss
+            training_end_time = time()
+            train_loss_output = self._generate_train_loss_output(epoch_idx, training_start_time, training_end_time,
+                                                                 train_loss)
+            if verbose:
+                self.logger.info(train_loss_output)
+            self._add_train_loss_to_tensorboard(epoch_idx, train_loss)
+
+            # TODO eval
+            if self.eval_step <= 0 or not valid_data:
+                if saved:
+                    self._save_checkpoint(epoch_idx, verbose=verbose)
+                continue
+            if (epoch_idx + 1) % self.eval_step == 0:
+                valid_start_time = time()
 
     @torch.no_grad()
     def evaluate(self, eval_data, load_best_model=True, model_file=None, show_progress=False):

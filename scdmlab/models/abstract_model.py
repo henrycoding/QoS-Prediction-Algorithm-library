@@ -7,14 +7,17 @@ from scdmlab.utils import ModelType
 
 
 class AbstractModel(nn.Module):
+    """Base class for all models
+    """
+
     def __init__(self):
         self.logger = getLogger()
         super(AbstractModel, self).__init__()
 
-    def calculate_loss(self, *args):
+    def calculate_loss(self, **kwargs):
         raise NotImplementedError
 
-    def predict(self, *args):
+    def predict(self, **kwargs):
         raise NotImplementedError
 
     def __str__(self):
@@ -24,7 +27,7 @@ class AbstractModel(nn.Module):
 
 
 class GeneralModel(AbstractModel):
-    type = ModelType.GENERAL
+    model_type = ModelType.GENERAL
 
     def __init__(self, config, dataset):
         super(GeneralModel, self).__init__()

@@ -22,12 +22,10 @@ def run_scdmlab(model=None, dataset=None, config_file_list=None, config_dict=Non
     # dataset create
     dataset = create_dataset(config)
 
-    # TODO 将属性变为list类型
-    for density in config['density']:
-        for dataset_type in config['dataset_type']:
-            config['current_density'] = density
-            config['current_dataset_type'] = dataset_type
-            train_data, test_data = data_preparation(config, dataset)
+    for cur_density in config['density']:
+        for cur_dataset_type in config['dataset_type']:
+            train_data, test_data = data_preparation(config, dataset, density=cur_density,
+                                                     dataset_type=cur_dataset_type)
 
             # model loading and initialization
             init_seed(config['seed'], config['reproducibility'])
@@ -37,6 +35,8 @@ def run_scdmlab(model=None, dataset=None, config_file_list=None, config_dict=Non
             trainer = get_trainer(config['MODEL_TYPE'], config['model'])(config, model)
 
             trainer.fit(train_data, test_data, saved=saved, show_progress=config['show_progress'])
+
+            test_result = trainer.evaluate(test_data, load_best_model=saved, show_progress=config['show_progress'])
 
     # trainer loading and initialization
     # trainer = get_trainer(config['MODEL_TYPE'], config['model'])(config, model)

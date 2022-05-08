@@ -21,6 +21,6 @@ stopping_step: ~
 loss_decimal_place: 4
 
 # evaluation settings
-metrics: [ 'MAE', 'MSE', 'RMSE' ]
+metrics: [ 'MAE', 'RMSE' ]
 eval_batch_size: 128
 metric_decimal_place: 4

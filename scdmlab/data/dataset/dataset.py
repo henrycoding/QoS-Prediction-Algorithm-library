@@ -29,9 +29,6 @@ class Dataset:
 
         Args:
             nan_symbol (int, optional): The value used in the dataset to represent missing data. Defaults to -1.
-
-        Returns:
-
         """
         triad_data = []
         matrix = deepcopy(matrix)
@@ -51,7 +48,7 @@ class Dataset:
         return train_data, test_data
 
     def build(self, *args):
-        raise NotImplementedError('Method [next] should be implemented.')
+        raise NotImplementedError('Method [build] should be implemented.')
 
     # TODO 无法保存
     def save(self):

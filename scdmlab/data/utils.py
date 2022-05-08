@@ -9,28 +9,32 @@ from scdmlab.utils import ModelType, InputType
 
 def create_dataset(config):
     dataset_module = importlib.import_module('scdmlab.data.dataset')
-    input_type = config['INPUT_TYPE']
-    type2class = {
-        InputType.MATRIX: 'MatrixDataset',
-        InputType.INFO: 'InfoDataset',
-    }
-    dataset_class = getattr(dataset_module, type2class[input_type])
+    if hasattr(dataset_module, config['model'] + 'Dataset'):
+        dataset_class = getattr(dataset_module, config['model'] + 'Dataset')
+    else:
+        input_type = config['MODEL_INPUT_TYPE']
+        type2class = {
+            InputType.MATRIX: 'MatrixDataset',
+            InputType.INFO: 'InfoDataset',
+        }
+        dataset_class = getattr(dataset_module, type2class[input_type])
+
     dataset = dataset_class(config)
     return dataset
 
 
-def data_preparation(config, dataset):
+def data_preparation(config, dataset, **kwargs):
     model_type = config['MODEL_TYPE']
-    density = config['current_density']
+    density = kwargs.get('density')
+    dataset_type = kwargs.get('dataset_type')
     if model_type == ModelType.GENERAL:
-        dataset_type = config['current_dataset_type']
         train_data, test_data = dataset.build(density, dataset_type)
 
         train_dataset = ToTorchDataset(train_data)
         test_dataset = ToTorchDataset(test_data)
 
-        train_dataloader = DataLoader(train_dataset, config['batch_size'])
-        test_dataloader = DataLoader(test_dataset, config['batch_size'])
+        train_dataloader = DataLoader(train_dataset, config['train_batch_size'])
+        test_dataloader = DataLoader(test_dataset, config['test_batch_size'])
 
         return train_dataloader, test_dataloader
 

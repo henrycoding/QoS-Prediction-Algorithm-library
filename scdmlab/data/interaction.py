@@ -27,61 +27,6 @@ def _convert_to_tensor(data):
 
 
 class Interaction(object):
-    """The basic class representing a batch of interaction records.
-
-    Note:
-        While training, there is no strict rules for data in one Interaction object.
-
-        While testing, it should be guaranteed that all interaction records of one single
-        user will not appear in different Interaction object, and records of the same user
-        should be continuous. Meanwhile, the positive cases of one user always need to occur
-        **earlier** than this user's negative cases.
-
-        A correct example:
-            =======     =======     =======
-            user_id     item_id     label
-            =======     =======     =======
-            1           2           1
-            1           6           1
-            1           3           1
-            1           1           0
-            2           3           1
-            ...         ...         ...
-            =======     =======     =======
-
-        Some wrong examples for Interaction objects used in testing:
-
-        1.
-            =======     =======     =======     ============
-            user_id     item_id     label
-            =======     =======     =======     ============
-            1           2           1
-            1           6           0           # positive cases of one user always need to
-
-                                                occur earlier than this user's negative cases
-            1           3           1
-            1           1           0
-            2           3           1
-            ...         ...         ...
-            =======     =======     =======     ============
-
-        2.
-            =======     =======     =======     ========
-            user_id     item_id     label
-            =======     =======     =======     ========
-            1           2           1
-            1           6           1
-            1           3           1
-            2           3           1           # records of the same user should be continuous.
-            1           1           0
-            ...         ...         ...
-            =======     =======     =======     ========
-
-    Attributes:
-        interaction (dict or pandas.DataFrame): keys are meaningful str (also can be called field name),
-            and values are Torch Tensor of numpy Array with shape (batch_size, \\*).
-    """
-
     def __init__(self, interaction):
         self.interaction = dict()
         if isinstance(interaction, dict):

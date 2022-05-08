@@ -13,10 +13,10 @@ class MatrixDataset(Dataset):
         self._from_scratch()
 
     def _from_scratch(self):
-        """Load dataset from scratch.
-        Initialize attributes firstly, then load data from atomic files, pre-process the dataset lastly.
+        """Load dataset from scratch
         """
         self.logger.debug(set_color(f'Loading {self.__class__} from scratch.', 'green'))
+
         self.rt_matrix = self._load_qos_matrix('rt')
         self.tp_Matrix = self._load_qos_matrix('tp')
         self.row_num, self.col_num = self.rt_matrix.shape

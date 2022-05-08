@@ -7,12 +7,19 @@ import yaml
 import torch
 from logging import getLogger
 from scdmlab.config import BASE_PATH, ROOT_PATH
-from scdmlab.utils import get_model, general_arguments, training_arguments, evaluation_arguments, dataset_arguments, \
-    set_color, ModelType, InputType
+from scdmlab.utils import get_model, general_arguments, training_arguments, evaluation_arguments, set_color, ModelType, \
+    InputType
 
 
 class Config(object):
     def __init__(self, model=None, dataset=None, config_file_list=None, config_dict=None):
+        """
+        Args:
+            model (str/AbstractModel): the model name or the model class, default is None, if it is None, config will search the parameter 'model' from the external input as the model name or model class.
+            dataset (str): the dataset name, default is None, if it is None, config will search the parameter 'dataset'
+            config_file_list (list of str): the external config file, it allows multiple config files, default is None.
+            config_dict (dict): the external parameter dictionaries, default is None.
+        """
         self._init_parameters_category()
         self._merge_external_config_dict(config_file_list, config_dict)
         self.model, self.model_class, self.dataset = self._get_model_and_dataset(model, dataset)
@@ -22,9 +29,10 @@ class Config(object):
         self._init_device()
 
     def _init_parameters_category(self):
+        """Initialize the keys of the basic parameters of the parameter dictionary
+        """
         self.parameters = dict()
         self.parameters['General'] = general_arguments
-        self.parameters['Dataset'] = dataset_arguments
         self.parameters['Training'] = training_arguments
         self.parameters['Evaluation'] = evaluation_arguments
 
@@ -79,7 +87,7 @@ class Config(object):
                     continue
                 cmd_arg_name, cmd_arg_value = arg[2:].split("=")
                 if cmd_arg_name in cmd_config_dict and cmd_arg_value != cmd_config_dict[cmd_arg_name]:
-                    raise SyntaxError("There are duplicate commend arg '%s' with different value." % arg)
+                    raise SyntaxError(f"There are duplicate commend arg '{arg}' with different value.")
                 else:
                     cmd_config_dict[cmd_arg_name] = cmd_arg_value
         if len(unrecognized_args) > 0:
@@ -89,6 +97,8 @@ class Config(object):
         return cmd_config_dict
 
     def _merge_external_config_dict(self, config_file_list, config_dict):
+        """Merge external configuration dictionaries
+        """
         file_config_dict = self._load_config_files(config_file_list)
         variable_config_dict = self._load_variable_config_dict(config_dict)
         cmd_config_dict = self._load_cmd_line()
@@ -106,8 +116,7 @@ class Config(object):
                 model = self.external_config_dict['model']
             except KeyError:
                 raise KeyError(
-                    'model need to be specified in at least one of the these ways: '
-                    '[model variable, config file, config dict, command line] '
+                    'model need to be specified in at least one of the these ways: [model variable, config file, config dict, command line]'
                 )
         if not isinstance(model, str):
             final_model_class = model
@@ -121,8 +130,7 @@ class Config(object):
                 final_dataset = self.external_config_dict['dataset']
             except KeyError:
                 raise KeyError(
-                    'dataset need to be specified in at least one of the these ways: '
-                    '[dataset variable, config file, config dict, command line] '
+                    'dataset need to be specified in at least one of the these ways: [dataset variable, config file, config dict, command line]'
                 )
         else:
             final_dataset = dataset
@@ -139,34 +147,12 @@ class Config(object):
     def _load_internal_config_dict(self, model, model_class, dataset):
         overall_init_file = os.path.join(BASE_PATH, 'properties', 'overall.yaml')
         model_init_file = os.path.join(BASE_PATH, 'properties', 'model', str(model) + '.yaml')
-        sample_init_file = os.path.join(BASE_PATH, 'properties', 'dataset', 'sample.yaml')
-        dataset_init_file = os.path.join(BASE_PATH, 'properties', 'dataset', str(dataset) + '.yaml')
-
-        quick_start_config_path = os.path.join(BASE_PATH, 'properties', 'quick_start_config_path')
-        context_aware_init = os.path.join(quick_start_config_path, 'context-aware.yaml')
-        context_aware_on_WSDream_general_init = os.path.join(quick_start_config_path,
-                                                             'context-aware_WSDream-general.yaml')
 
         self.internal_config_dict = dict()
-        for file in [overall_init_file, model_init_file, sample_init_file, dataset_init_file]:
+        for file in [overall_init_file, model_init_file]:
             if os.path.isfile(file):
-                config_dict = self._update_internal_config_dict(file)
-                if file == dataset_init_file:
-                    self.parameters['Dataset'] += [
-                        key for key in config_dict.keys() if key not in self.parameters['Dataset']
-                    ]
-
-        self.internal_config_dict['MODEL_TYPE'] = model_class.type
-
-        # TODO
-        self.internal_config_dict['INPUT_TYPE'] = InputType.MATRIX
-
-        if self.internal_config_dict['MODEL_TYPE'] == ModelType.GENERAL:
-            pass
-        elif self.internal_config_dict['MODEL_TYPE'] == ModelType.CONTEXT:
-            self._update_internal_config_dict(context_aware_init)
-            if dataset == 'WSDream-general':
-                self._update_internal_config_dict(context_aware_on_WSDream_general_init)
+                self._update_internal_config_dict(file)
+        self.internal_config_dict['MODEL_TYPE'] = model_class.model_type
 
     def _get_final_config_dict(self):
         final_config_dict = dict()
@@ -177,12 +163,26 @@ class Config(object):
     def _set_default_parameters(self):
         self.final_config_dict['dataset'] = self.dataset
         self.final_config_dict['model'] = self.model
-        if self.dataset == 'WSDream-general':
+        if self.dataset == 'WSDream-1':
             self.final_config_dict['data_path'] = os.path.join(ROOT_PATH, 'dataset', self.dataset)
-        else:
-            self.final_config_dict['data_path'] = os.path.join(self.final_config_dict['data_path'], self.dataset)
 
-        # TODO
+        if hasattr(self.model_class, 'input_type'):
+            self.final_config_dict['MODEL_INPUT_TYPE'] = self.model_class.input_type
+        else:
+            raise ValueError("Model should has attr 'input_type'")
+
+        density = self.final_config_dict['density']
+        if isinstance(density, str):
+            self.final_config_dict['density'] = [density]
+
+        dataset_type = self.final_config_dict['dataset_type']
+        if isinstance(dataset_type, str):
+            self.final_config_dict['dataset_type'] = [dataset_type]
+
+        # TODO metrics类实现
+        metrics = self.final_config_dict['metrics']
+        if isinstance(metrics, str):
+            self.final_config_dict['metrics'] = [metrics]
 
     def _init_device(self):
         use_gpu = self.final_config_dict['use_gpu']

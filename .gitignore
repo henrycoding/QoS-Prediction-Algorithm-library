@@ -40,6 +40,7 @@ parts/
 sdist/
 var/
 log/
+log-tensorboard/
 runs/
 wheels/
 output/

@@ -31,6 +31,6 @@ class GeneralModel(AbstractModel):
 
     def __init__(self, config, dataset):
         super(GeneralModel, self).__init__()
-        self.num_users = dataset.row_num
-        self.num_services = dataset.col_num
+        self.num_users = dataset.NUM_USERS
+        self.num_services = dataset.NUM_SERVICES
         self.device = config['device']

@@ -15,15 +15,6 @@ class Dataset:
         self.dataset_path = config['data_path']
         self.logger = getLogger()
 
-    def _load_qos_matrix(self, dataset_type):
-        """Load QoS matrix
-        """
-        matrix_path = os.path.join(self.dataset_path, f'{dataset_type}Matrix.txt')
-        if not os.path.isfile(matrix_path):
-            raise ValueError(f'File {matrix_path} not exist.')
-        data = np.loadtxt(matrix_path)
-        return data
-
     def _get_triad(self, matrix, nan_symbol=-1):
         """Converts matrix data to triad (uid,iid,rate)
 
@@ -39,24 +30,34 @@ class Dataset:
         triad_data = np.array(triad_data)
         return triad_data
 
-    def _split_train_test(self, data, density, shuffle=True):
-        if shuffle:
-            np.random.shuffle(data)
+    def _load_qos_matrix(self, dataset_type):
+        """Load QoS matrix
+        """
+        matrix_path = os.path.join(self.dataset_path, f'{dataset_type}Matrix.txt')
+        if not os.path.isfile(matrix_path):
+            raise ValueError(f'File {matrix_path} not exist.')
+        data = np.loadtxt(matrix_path)
+        return data
 
-        train_num = int(len(data) * density)
-        train_data, test_data = data[:train_num], data[train_num:]
+    def _load_info_data(self, dataset_type):
+        """Load Users/Services info dataset
+        """
+        if dataset_type == 'user':
+            info_path = os.path.join(self.dataset_path, 'userlist.txt')
+        elif dataset_type == 'service':
+            info_path = os.path.join(self.dataset_path, 'wslist.txt')
+        if not os.path.isfile(info_path):
+            raise ValueError(f'File {info_path} not exist.')
+        data = pd.read_csv(info_path, sep='\t')
+        return data
+
+    def _split_train_test(self, triad_data, density, shuffle=True):
+        if shuffle:
+            np.random.shuffle(triad_data)
+
+        train_num = int(len(triad_data) * density)
+        train_data, test_data = triad_data[:train_num], triad_data[train_num:]
         return train_data, test_data
 
     def build(self, *args):
         raise NotImplementedError('Method [build] should be implemented.')
-
-    # TODO 无法保存
-    def save(self):
-        """Saving this `MatrixDataset` class
-        """
-        save_dir = self.config['checkpoint_dir']
-        ensure_dir(save_dir)
-        file = os.path.join(save_dir, f'{self.config["dataset"]}-dataset.pth')
-        self.logger.info(set_color('Saving dataset into ', 'pink') + f'[{file}]')
-        with open(file, 'wb') as f:
-            pickle.dump(self, f)

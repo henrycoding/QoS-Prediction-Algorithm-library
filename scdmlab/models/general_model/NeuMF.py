@@ -88,9 +88,9 @@ class NeuMF(GeneralModel):
 
         return output.squeeze(-1)
 
-    def calculate_loss(self, user, service, rating):
-        predict = self.forward(user, service)
-        return self.loss(predict, rating)
+    def calculate_loss(self, users, services, ratings):
+        predicts = self.forward(users, services)
+        return self.loss(predicts, ratings)
 
-    def predict(self, user, service):
-        return self.forward(user, service)
+    def predict(self, users, services):
+        return self.forward(users, services)

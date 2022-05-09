@@ -8,6 +8,7 @@ import torch.optim as optim
 from torch.nn.utils.clip_grad import clip_grad_norm_
 
 from scdmlab.utils import get_local_time, set_color, get_gpu_usage, get_tensorboard
+from scdmlab.evaluator.evaluation import mae, rmse
 
 
 class AbstractTrainer(object):
@@ -46,6 +47,8 @@ class GeneralTrainer(AbstractTrainer):
         self.weight_decay = config['weight_decay']
         self.optimizer = self._build_optimizer()
 
+        self.best_valid_result = np.inf
+
     def _build_optimizer(self, **kwargs):
         params = kwargs.get('params', self.model.parameters())
         learner = kwargs.get('learner', self.learner)
@@ -73,8 +76,9 @@ class GeneralTrainer(AbstractTrainer):
             ) if show_progress else train_data
         )
         for batch_idx, batched_data in enumerate(iter_data):
-            users, services, ratings = batched_data[0].to(self.device), batched_data[1].to(self.device), batched_data[
-                2].to(self.device)
+            users, services, ratings = batched_data[0].to(self.device), \
+                                       batched_data[1].to(self.device), \
+                                       batched_data[2].to(self.device)
             self.optimizer.zero_grad()
             loss = loss_func(users, services, ratings)
             total_loss = loss.item() if total_loss is None else total_loss + loss.item()
@@ -87,26 +91,44 @@ class GeneralTrainer(AbstractTrainer):
             if self.gpu_available and show_progress:
                 iter_data.set_postfix_str(set_color('GPU RAM: ' + get_gpu_usage(self.device), 'yellow'))
 
-        return total_loss
+        return total_loss / len(train_data)
 
-    def _valid_epoch(self, valid_data, show_progress=False):
-        valid_result = self.evaluate()
+    @torch.no_grad()
+    def _valid_epoch(self, epoch_idx, valid_data, show_progress=False):
+        self.model.eval()
+        loss_func = self.model.calculate_loss
+        eval_total_loss = None
+        iter_data = (
+            tqdm(
+                valid_data,
+                total=len(valid_data),
+                ncols=100,
+                desc=set_color(f"Eval", 'pink'),
+            ) if show_progress else valid_data
+        )
+        for batch_idx, batched_data in enumerate(iter_data):
+            users, services, ratings = batched_data[0].to(self.device), \
+                                       batched_data[1].to(self.device), \
+                                       batched_data[2].to(self.device)
+            loss = loss_func(users, services, ratings)
+            eval_total_loss = loss.item() if eval_total_loss is None else eval_total_loss + loss.item()
+
+        valid_result = eval_total_loss / len(valid_data)
+        if valid_result < self.best_valid_result:
+            self._save_checkpoint(epoch_idx)
+            self.best_valid_result = valid_result
 
     def _save_checkpoint(self, epoch, verbose=True, **kwargs):
-        r"""Store the model parameters information and training information.
-
-        Args:
-            epoch (int): the current epoch id
-
+        """Store the model parameters information and training information.
         """
         saved_model_file = kwargs.pop('saved_model_file', self.saved_model_file)
         state = {
             'config': self.config,
             'epoch': epoch,
-            'cur_step': self.cur_step,
-            'best_valid_score': self.best_valid_score,
+            # 'cur_step': self.cur_step,
+            # 'best_valid_score': self.best_valid_score,
             'state_dict': self.model.state_dict(),
-            'other_parameter': self.model.other_parameter(),
+            # 'other_parameter': self.model.other_parameter(),
             'optimizer': self.optimizer.state_dict(),
         }
         torch.save(state, saved_model_file)
@@ -117,59 +139,16 @@ class GeneralTrainer(AbstractTrainer):
         if torch.isnan(loss):
             raise ValueError('Training loss is nan')
 
-    def _generate_train_loss_output(self, epoch_idx, s_time, e_time, losses):
-        des = self.config['loss_decimal_place'] or 4
-        train_loss_output = (set_color('epoch %d training', 'green') + ' [' + set_color('time', 'blue') +
-                             ': %.2fs, ') % (epoch_idx, e_time - s_time)
-        if isinstance(losses, tuple):
-            des = (set_color('train_loss%d', 'blue') + ': %.' + str(des) + 'f')
-            train_loss_output += ', '.join(des % (idx + 1, loss) for idx, loss in enumerate(losses))
-        else:
-            des = '%.' + str(des) + 'f'
-            train_loss_output += set_color('train loss', 'blue') + ': ' + des % losses
-        return train_loss_output + ']'
-
-    def _add_train_loss_to_tensorboard(self, epoch_idx, losses, tag='Loss/Train'):
-        if isinstance(losses, tuple):
-            for idx, loss in enumerate(losses):
-                self.tensorboard.add_scalar(tag + str(idx), loss, epoch_idx)
-        else:
-            self.tensorboard.add_scalar(tag, losses, epoch_idx)
-
     def fit(self, train_data, valid_data=None, verbose=True, saved=True, show_progress=False):
         """Train the model based on the train data and the valid data.
-
-        Args:
-            train_data (DataLoader): the train data
-            valid_data (DataLoader, optional): the valid data, default: None.
-                                               If it's None, the early_stopping is invalid.
-            verbose (bool, optional): whether to write training and evaluation information to logger, default: True
-            saved (bool, optional): whether to save the model parameters, default: True
-            show_progress (bool): Show the progress of training epoch and evaluate epoch. Defaults to ``False``.
-                                    Includes (epoch_idx, valid_score) input arguments.
-
-        Returns:
-             (float, dict): best valid score and best valid result. If valid_data is None, it returns (-1, None)
         """
-
         for epoch_idx in range(self.epochs):
-            training_start_time = time()
             train_loss = self._train_epoch(train_data, epoch_idx, show_progress=show_progress)
             self.train_loss_dict[epoch_idx] = train_loss
-            training_end_time = time()
-            train_loss_output = self._generate_train_loss_output(epoch_idx, training_start_time, training_end_time,
-                                                                 train_loss)
-            if verbose:
-                self.logger.info(train_loss_output)
-            self._add_train_loss_to_tensorboard(epoch_idx, train_loss)
+            self.logger.info(f"Training Epoch:[{epoch_idx + 1}/{self.epochs}] Loss:{train_loss:.4f}")
 
-            # TODO eval
-            if self.eval_step <= 0 or not valid_data:
-                if saved:
-                    self._save_checkpoint(epoch_idx, verbose=verbose)
-                continue
             if (epoch_idx + 1) % self.eval_step == 0:
-                valid_start_time = time()
+                self._valid_epoch(epoch_idx, valid_data, show_progress)
 
     @torch.no_grad()
     def evaluate(self, eval_data, load_best_model=True, model_file=None, show_progress=False):
@@ -182,3 +161,24 @@ class GeneralTrainer(AbstractTrainer):
             self.model.load_state_dict(checkpoint['state_dict'])
 
         self.model.eval()
+        iter_data = (
+            tqdm(
+                eval_data,
+                total=len(eval_data),
+                ncols=100,
+                desc=set_color(f"Evaluate ", 'pink'),
+            ) if show_progress else eval_data
+        )
+        predicts = []
+        reals = []
+        for batch_idx, batched_data in enumerate(iter_data):
+            users, services, ratings = batched_data[0].to(self.device), \
+                                       batched_data[1].to(self.device), \
+                                       batched_data[2].to(self.device)
+            y_pred = self.model.predict(users, services)
+            predicts.extend(y_pred.tolist())
+            reals.extend(ratings.tolist())
+
+        result_mae = mae(reals, predicts)
+        result_rmse = rmse(reals, predicts)
+        self.logger.info(f"mae:{result_mae}, rmse:{result_rmse}")

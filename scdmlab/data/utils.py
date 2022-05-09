@@ -1,6 +1,7 @@
 import os
 import pickle
 import importlib
+from functools import wraps
 import torch
 from torch.utils.data import Dataset, DataLoader
 
@@ -34,9 +35,26 @@ def data_preparation(config, dataset, **kwargs):
         test_dataset = ToTorchDataset(test_data)
 
         train_dataloader = DataLoader(train_dataset, config['train_batch_size'])
-        test_dataloader = DataLoader(test_dataset, config['test_batch_size'])
+        test_dataloader = DataLoader(test_dataset, config['eval_batch_size'])
 
         return train_dataloader, test_dataloader
+
+
+def cache4method(func):
+    """类中的方法专用的缓存装饰器
+    """
+
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        keys = list(args) + list(kwargs.values())
+        for key in keys:
+            key = str(id(self)) + str(key)
+            if key not in wrapper.cache:
+                wrapper.cache[key] = func(self, *args, **kwargs)
+            return wrapper.cache[key]
+
+    wrapper.cache = {}
+    return wrapper
 
 
 class ToTorchDataset(Dataset):

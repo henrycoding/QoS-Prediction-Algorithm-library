@@ -224,6 +224,8 @@ def use_loss_fn(params: CfgNode):
         return torch.nn.L1Loss()
     elif type_ == 'SmoothL1':
         return torch.nn.SmoothL1Loss()
+    elif type_ == "Huber":
+        return torch.nn.HuberLoss()
     else:
         raise NotImplementedError('loss function not support')
 

@@ -47,9 +47,9 @@ class NeuMF(nn.Module):
 
         vector = torch.cat([gmf_vec, mlp_vec], dim=-1)
         logits = self.affine_output(vector)
-        rating = self.logistic(logits)
+        # rating = self.logistic(logits)
 
-        return rating
+        return logits
 
 
 class NeuMFModel(ModelBase):

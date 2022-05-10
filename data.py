@@ -102,8 +102,13 @@ class InfoDataset(DatasetBase):
         """
         row = self.info_data.iloc[id_, :]
         r = []
+        idx = 0
         for column in self.enabled_columns:
-            idx = self.feature2idx[column][row[column]]
+            item = row[column]
+            if str(item) == 'nan':
+                idx = 0
+            else:
+                idx = self.feature2idx[column][item]
             r.append(idx)
         return r
 

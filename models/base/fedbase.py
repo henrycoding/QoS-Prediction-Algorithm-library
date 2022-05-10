@@ -4,6 +4,7 @@ from typing import Dict, List
 
 import numpy as np
 from tqdm import tqdm
+from yacs.config import CfgNode
 
 from utils.model_util import use_optimizer
 
@@ -11,17 +12,20 @@ from .utils import train_mult_epochs_with_dataloader
 
 
 class ClientBase(object):
-    def __init__(self, device, model) -> None:
+    def __init__(self, device, model, config: CfgNode) -> None:
+        self.loss_list = []
         self.device = device
         self.model = model
         self.data_loader = None
+        self.config = config
         super().__init__()
 
     def fit(self, params, loss_fn, optimizer: str, lr, epochs=5):
         self.model.load_state_dict(params)
         self.model.train()
         self.model.to(self.device)
-        opt = use_optimizer(self.model, optimizer, lr)
+        # opt = use_optimizer(self.model, optimizer, lr)
+        opt = use_optimizer(self.model, self.config)
         loss, lis = train_mult_epochs_with_dataloader(
             epochs,
             model=self.model,
@@ -36,14 +40,15 @@ class ClientBase(object):
 class ClientsBase(object):
     """多client 的虚拟管理节点
     """
-    def __init__(self, triad, model, device) -> None:
-        super().__init__()
+
+    def __init__(self, triad, model, device, config: CfgNode) -> None:
         self.triad = triad
         self.model = model
         self.device = device
         self.clients_map = {}  # 存储每个client的数据集
-
+        self.config = config
         self._get_clients()
+        super().__init__()
 
     def sample_clients(self, fraction):
         """Select some fraction of all clients."""
@@ -70,8 +75,9 @@ class ClientsBase(object):
 
 
 class ServerBase(object):
-    def __init__(self) -> None:
+    def __init__(self, config: CfgNode) -> None:
         super().__init__()
+        self.config = config
 
     def upgrade_wich_cefficients(self, params: List[Dict], coefficients: Dict):
         """使用加权平均对参数进行更新
@@ -101,6 +107,9 @@ class ServerBase(object):
 
 
 class FedModelBase(object):
+    def __init__(self, config: CfgNode):
+        self.config = config
+
     def update_selected_clients(self, sampled_client_indices, lr, s_params):
         """使用 client.fit 函数来训练被选择的client
         """

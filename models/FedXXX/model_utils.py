@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from .resnet_utils import *
+from resnet_utils import *
 
 
 class Linear(nn.Module):

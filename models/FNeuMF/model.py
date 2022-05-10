@@ -1,7 +1,10 @@
+import time
 from pickletools import optimize
 
 import torch
 import torch.nn.functional as F
+
+from models.FNeuMF.config import get_cfg_defaults
 from models.base.fedbase import FedModelBase
 from torch import nn
 from tqdm import tqdm
@@ -82,13 +85,14 @@ class FedNeuMFModel(FedModelBase):
                  layers=None,
                  use_gpu=True,
                  optimizer="adam") -> None:
-        super().__init__()
+        cfg = get_cfg_defaults()
+        super().__init__(cfg)
         self.device = ("cuda" if
                        (use_gpu and torch.cuda.is_available()) else "cpu")
         self.name = __class__.__name__
         self._model = FedNeuMF(n_user, n_item, dim, layers)
-        self.server = Server()
-        self.clients = Clients(triad, self._model, self.device)
+        self.server = Server(cfg)
+        self.clients = Clients(triad, self._model, self.device, cfg)
 
         self.optimizer = optimizer
         self.loss_fn = loss_fn
@@ -96,13 +100,13 @@ class FedNeuMFModel(FedModelBase):
         self.logger.initial_logger()
 
     def _check(self, iterator):
-        assert abs(sum(iterator) - 1) <= 1e-4
+        sum_fration = sum(iterator)
+        assert abs(sum(iterator) - 1) <= 1e-4  # 验证加权系数和
 
-    def fit(self, epochs, lr, test_triad, fraction=1):
-        # fraction?
+    def fit(self, epochs, lr, test_triad, date, density, fraction=1):
         best_train_loss = None
         is_best = False
-        for epoch in tqdm(range(epochs), desc="Training Epochs"):
+        for epoch in tqdm(range(epochs), desc=f"Density={density},Training Epochs"):
 
             # 0. Get params from server
             s_params = self.server.params if epoch != 0 else self._model.state_dict(
@@ -116,6 +120,7 @@ class FedNeuMFModel(FedModelBase):
                 sampled_client_indices, lr, s_params)
 
             # 3. Update params to Server
+            # 服务端加权平均更新系数
             mixing_coefficients = [
                 self.clients[idx].n_item / selected_total_size
                 for idx in sampled_client_indices
@@ -125,7 +130,7 @@ class FedNeuMFModel(FedModelBase):
                                                  mixing_coefficients)
 
             self.logger.info(
-                f"[{epoch}/{epochs}] Loss:{sum(loss_list)/len(loss_list):>3.5f}"
+                f"[{epoch}/{epochs}] Loss:{sum(loss_list) / len(loss_list):>3.5f}"
             )
 
             print(list(self.clients[0].loss_list))
@@ -143,7 +148,8 @@ class FedNeuMFModel(FedModelBase):
                 "epoch": epoch + 1,
                 "best_loss": best_train_loss
             }
-            save_checkpoint(ckpt, is_best, f"output/{self.name}",
+
+            save_checkpoint(ckpt, is_best, f"output/{self.name}/{date}/density-{density}",
                             f"loss_{best_train_loss:.4f}.ckpt")
 
             if (epoch + 1) % 20 == 0:
@@ -153,7 +159,7 @@ class FedNeuMFModel(FedModelBase):
                 rmse_ = rmse(y_list, y_pred_list)
 
                 self.logger.info(
-                    f"Epoch:{epoch+1} mae:{mae_},mse:{mse_},rmse:{rmse_}")
+                    f"Epoch:{epoch + 1} mae:{mae_},mse:{mse_},rmse:{rmse_}")
 
     def predict(self, test_loader, resume=False, path=None):
         if resume:
@@ -195,6 +201,3 @@ class FedNeuMFModel(FedModelBase):
 
     def __repr__(self) -> str:
         return str(self._model)
-
-
-

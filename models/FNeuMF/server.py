@@ -1,5 +1,4 @@
-from collections import OrderedDict
-from typing import Dict, List
+from yacs.config import CfgNode
 
 from models.base import ServerBase
 
@@ -8,8 +7,8 @@ class Server(ServerBase):
     """服务端只做模型参数的融合
     """
 
-    def __init__(self, cfg) -> None:
-        super().__init__(cfg)
+    def __init__(self, config: CfgNode) -> None:
+        super().__init__(config)
         self._params = None
 
     @property

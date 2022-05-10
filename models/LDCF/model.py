@@ -1,109 +1,91 @@
-from pickletools import optimize
-
 import torch
 import torch.nn.functional as F
-from models.base.fedbase import FedModelBase
 from torch import nn
+from yacs.config import CfgNode
 from tqdm import tqdm
-from utils.evaluation import mae, mse, rmse
-from utils.model_util import load_checkpoint, save_checkpoint
-from utils.mylogger import TNLog
-
-from client import Clients
-from server import Server
-
-
-class FedNeuMF(nn.Module):
-    def __init__(self,
-                 num_users,
-                 num_items,
-                 latent_dim,
-                 layers=None,
-                 output_dim=1) -> None:
-        super(FedNeuMF, self).__init__()
-
-        # GMF网络的embedding层
-        self.GMF_embedding_user = nn.Embedding(num_embeddings=num_users,
-                                               embedding_dim=latent_dim)
-        self.GMF_embedding_item = nn.Embedding(num_embeddings=num_items,
-                                               embedding_dim=latent_dim)
-
-        # MLP的embedding层
-        self.MLP_embedding_user = nn.Embedding(num_embeddings=num_users,
-                                               embedding_dim=latent_dim)
-        self.MLP_embedding_item = nn.Embedding(num_embeddings=num_items,
-                                               embedding_dim=latent_dim)
-
-        # MLP网络
-        self.MLP_layers = nn.ModuleList()
-        # MLP第一层，输入是用户特征向量 + 项目特征向量，因为假定特征空间维度都是 latemt_dim，因此输入维度大小为 2 * latemt_dim
-        self.MLP_layers.append(nn.Linear(latent_dim * 2, layers[0]))
-        for in_size, out_size in zip(layers, layers[1:]):
-            self.MLP_layers.append(nn.Linear(in_size, out_size))
-        self.MLP_output = nn.Linear(layers[-1], latent_dim)
-
-        # 合并模型
-        self.linear = nn.Linear(2 * latent_dim, output_dim)
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(self, user_indexes, item_indexes):
-        # GMF模型计算
-        GMF_user_embedding = self.GMF_embedding_user(user_indexes)
-        GMF_item_embedding = self.GMF_embedding_item(item_indexes)
-        # 点积
-        GMF_vec = torch.mul(GMF_user_embedding, GMF_item_embedding)
-
-        # MLP模型计算
-        MLP_user_embedding = self.MLP_embedding_user(user_indexes)
-        MLP_item_embedding = self.MLP_embedding_item(item_indexes)
-        # 隐向量堆叠
-        x = torch.cat([MLP_user_embedding, MLP_item_embedding], dim=-1)
-        # MLP网络
-        for layer in self.MLP_layers:
-            x = layer(x)
-            x = F.relu(x)
-        MLP_vec = self.MLP_output(x)
-
-        # 合并模型
-        vector = torch.cat([GMF_vec, MLP_vec], dim=-1)
-        linear = self.linear(vector)
-        output = self.sigmoid(linear)
-
-        return output
+from models.LDCF.client import Clients
+from models.LDCF.server import Server
+from models.base import FedModelBase
+from utils import TNLog
+from utils.evaluation import mae, rmse, mse
+from utils.model_util import save_checkpoint, load_checkpoint, use_loss_fn
 
 
-class FedNeuMFModel(FedModelBase):
-    def __init__(self,
-                 triad,
-                 loss_fn,
-                 n_user,
-                 n_item,
-                 dim,
-                 layers=None,
-                 use_gpu=True,
-                 optimizer="adam") -> None:
-        super().__init__()
+class LDCF(nn.Module):
+    def __init__(self, config: CfgNode) -> None:
+        super(LDCF, self).__init__()
+        self.config = config
+
+        self.num_users = self.config.TRAIN.NUM_USERS
+        self.num_items = self.config.TRAIN.NUM_ITEMS
+        self.num_users_ac = self.config.TRAIN.NUM_USERS_AC
+        self.num_item_ac = self.config.TRAIN.NUM_ITEM_AC
+
+        self.layers = self.config.TRAIN.LAYERS
+        self.latent_dim = self.config.TRAIN.LATENT_DIM
+        # MLP
+        self.embedding_user_mlp = nn.Embedding(num_embeddings=self.num_users, embedding_dim=self.latent_dim)
+        self.embedding_item_mlp = nn.Embedding(num_embeddings=self.num_items, embedding_dim=self.latent_dim)
+
+        # AC
+        self.embedding_user_ac = nn.Embedding(num_embeddings=self.num_users_ac, embedding_dim=self.latent_dim)
+        self.embedding_item_ac = nn.Embedding(num_embeddings=self.num_item_ac, embedding_dim=self.latent_dim)
+
+        # fully-connected layers in MLP
+        self.fc_layers = nn.ModuleList()
+        for in_size, out_size in zip(self.layers[:-1], self.layers[1:]):
+            self.fc_layers.append(nn.Linear(in_size, out_size))
+        self.affine_output = nn.Linear(2 + self.layers[-1], 1)
+        self.logistic = nn.Sigmoid()
+
+    def forward(self, user, item):
+        user_id = user[:, 0]
+        user_lc = user[:, 1:3]
+        item_id = item[:, 0]
+        item_lc = item[:, 1:3]
+        user_embedding_mlp = self.embedding_user_mlp(user_id)
+        item_embedding_mlp = self.embedding_item_mlp(item_id)
+
+        user_embedding_ac = self.embedding_user_ac(user_lc)
+        item_embedding_ac = self.embedding_item_ac(item_lc)
+
+        sim_vec = F.cosine_similarity(user_embedding_ac, item_embedding_ac, dim=-1)
+
+        mlp_vec = torch.cat([user_embedding_mlp, item_embedding_mlp], dim=-1)  # 拼接
+
+        for layer in self.fc_layers:
+            mlp_vec = layer(mlp_vec)
+            mlp_vec = F.relu(mlp_vec)
+
+        vector = torch.cat([sim_vec, mlp_vec], dim=-1)
+        logits = self.affine_output(vector)
+        # rating = self.logistic(logits)
+        return logits
+
+
+class FedLDCFModel(FedModelBase):
+    def __init__(self, triad, cfg: CfgNode) -> None:
+        super().__init__(cfg)
+        use_gpu = self.config.SYSTEM.USE_GPU
         self.device = ("cuda" if
                        (use_gpu and torch.cuda.is_available()) else "cpu")
         self.name = __class__.__name__
-        self._model = FedNeuMF(n_user, n_item, dim, layers)
-        self.server = Server()
-        self.clients = Clients(triad, self._model, self.device)
-
-        self.optimizer = optimizer
-        self.loss_fn = loss_fn
+        self._model = LDCF(cfg)
+        self.server = Server(cfg)
+        self.clients = Clients(cfg, triad, self._model, self.device)
+        self.optimizer = self.config.TRAIN.OPTIMIZER.TYPE
+        self.loss_fn = use_loss_fn(self.config)
         self.logger = TNLog(self.name)
         self.logger.initial_logger()
 
     def _check(self, iterator):
-        assert abs(sum(iterator) - 1) <= 1e-4
+        assert abs(sum(iterator) - 1) <= 1e-4  # 验证加权系数和
 
-    def fit(self, epochs, lr, test_triad, fraction=1):
-        # fraction?
+    def fit(self, epochs, lr, test_triad, date, density):
+        fraction = self.config.TRAIN.FRACTION
         best_train_loss = None
         is_best = False
-        for epoch in tqdm(range(epochs), desc="Training Epochs"):
-
+        for epoch in tqdm(range(epochs), desc=f"Density={density},Training Epochs"):
             # 0. Get params from server
             s_params = self.server.params if epoch != 0 else self._model.state_dict(
             )
@@ -116,6 +98,7 @@ class FedNeuMFModel(FedModelBase):
                 sampled_client_indices, lr, s_params)
 
             # 3. Update params to Server
+            # 服务端加权平均更新系数
             mixing_coefficients = [
                 self.clients[idx].n_item / selected_total_size
                 for idx in sampled_client_indices
@@ -125,7 +108,7 @@ class FedNeuMFModel(FedModelBase):
                                                  mixing_coefficients)
 
             self.logger.info(
-                f"[{epoch}/{epochs}] Loss:{sum(loss_list)/len(loss_list):>3.5f}"
+                f"[{epoch}/{epochs}] Loss:{sum(loss_list) / len(loss_list):>3.5f}"
             )
 
             print(list(self.clients[0].loss_list))
@@ -143,17 +126,18 @@ class FedNeuMFModel(FedModelBase):
                 "epoch": epoch + 1,
                 "best_loss": best_train_loss
             }
-            save_checkpoint(ckpt, is_best, f"output/{self.name}",
+
+            save_checkpoint(ckpt, is_best, f"output/{self.name}/{date}/density-{density}",
                             f"loss_{best_train_loss:.4f}.ckpt")
 
-            if (epoch + 1) % 20 == 0:
+            if (epoch + 1) % 25 == 0:
                 y_list, y_pred_list = self.predict(test_triad)
                 mae_ = mae(y_list, y_pred_list)
                 mse_ = mse(y_list, y_pred_list)
                 rmse_ = rmse(y_list, y_pred_list)
 
                 self.logger.info(
-                    f"Epoch:{epoch+1} mae:{mae_},mse:{mse_},rmse:{rmse_}")
+                    f"Epoch:{epoch + 1} mae:{mae_},mse:{mse_},rmse:{rmse_}")
 
     def predict(self, test_loader, resume=False, path=None):
         if resume:
@@ -195,6 +179,3 @@ class FedNeuMFModel(FedModelBase):
 
     def __repr__(self) -> str:
         return str(self._model)
-
-
-

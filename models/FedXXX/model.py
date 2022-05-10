@@ -15,10 +15,10 @@ from utils.model_util import (load_checkpoint, save_checkpoint, split_d_triad,
                               use_optimizer)
 from utils.mylogger import TNLog
 
-from .client import Clients
-from .model_utils import *
-from .resnet_utils import ResNetBasicBlock, ResNetEncoder
-from .server import Server
+from client import Clients
+from model_utils import *
+from resnet_utils import ResNetBasicBlock, ResNetEncoder
+from server import Server
 
 
 class FedXXX(nn.Module):
@@ -62,6 +62,7 @@ class FedXXX(nn.Module):
 class FedXXXModel(ModelBase):
     """非联邦的版本
     """
+
     def __init__(self,
                  user_params,
                  item_params,
@@ -90,7 +91,9 @@ class FedXXXModel(ModelBase):
 class FedXXXLaunch(FedModelBase):
     """联邦的版本
     """
+
     def __init__(self,
+                 cfg,
                  d_triad,
                  user_params,
                  item_params,
@@ -105,8 +108,8 @@ class FedXXXLaunch(FedModelBase):
         self.name = __class__.__name__
         self._model = FedXXX(user_params, item_params, linear_layers,
                              output_dim, activation)
-        self.server = Server()
-        self.clients = Clients(d_triad, self._model, self.device)
+        self.server = Server(cfg)
+        self.clients = Clients(cfg, d_triad, self._model, self.device)
         self.optimizer = optimizer
         self.loss_fn = loss_fn
         self.logger = TNLog(self.name)
@@ -139,7 +142,7 @@ class FedXXXLaunch(FedModelBase):
 
             # 3. 服务端根据参数更新模型
             self.logger.info(
-                f"[{epoch}/{epochs}] Loss:{sum(loss_list)/len(loss_list):>3.5f}"
+                f"[{epoch}/{epochs}] Loss:{sum(loss_list) / len(loss_list):>3.5f}"
             )
 
             print(self.clients[0].loss_list)
@@ -168,7 +171,7 @@ class FedXXXLaunch(FedModelBase):
                 rmse_ = rmse(y_list, y_pred_list)
 
                 self.logger.info(
-                    f"Epoch:{epoch+1} mae:{mae_},mse:{mse_},rmse:{rmse_}")
+                    f"Epoch:{epoch + 1} mae:{mae_},mse:{mse_},rmse:{rmse_}")
 
     # 这里的代码写的很随意 没时间优化了
     def predict(self,

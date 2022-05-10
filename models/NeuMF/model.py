@@ -43,7 +43,7 @@ class NeuMF(nn.Module):
         for in_size, out_size in zip(self.layers[:-1], self.layers[1:]):
             self.fc_layers.append(nn.Linear(in_size, out_size))
 
-        self.affine_output = nn.Linear(self.latent_dim_gmf + self.layers[-1], 1)  # ???
+        self.affine_output = nn.Linear(self.latent_dim_gmf + self.layers[-1], 1)
         self.logistic = nn.Sigmoid()
 
     def forward(self, user_indices, item_indices):

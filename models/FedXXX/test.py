@@ -4,6 +4,7 @@ from functools import partial
 import numpy as np
 import torch
 from data import InfoDataset, MatrixDataset, ToTorchDataset
+from models.FedXXX.config import get_cfg_defaults
 from models.FedXXX.model import Embedding, FedXXXLaunch, FedXXXModel
 from models.FedXXX.resnet_utils import ResNetBasicBlock
 from torch import nn, optim
@@ -15,7 +16,8 @@ from utils.decorator import timeit
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import count_parameters, freeze_random
 
-from .model import FedXXXModel
+from model import FedXXXModel
+
 """
 RESULT MODEL:
 Density:0.05,type:rt,mae:0.39733654260635376,mse:1.825060248374939,rmse:1.3509478569030762 43w
@@ -97,6 +99,7 @@ item_params = {
     "block": ResNetBasicBlock
 }
 
+
 # user_params = {
 #     "type_": "cat",  # embedding层整合方式 stack or cat
 #     "embedding_nums": u_info.embedding_nums,  # 每个要embedding的特征的总个数
@@ -162,7 +165,9 @@ if not IS_FED:
 else:
     train_data = fed_data_preprocess(train, u_info, i_info)
     test_data = fed_data_preprocess(test, u_info, i_info)
-    model = FedXXXLaunch(train_data,
+    cfg = get_cfg_defaults()
+    model = FedXXXLaunch(cfg,
+                         train_data,
                          user_params,
                          item_params, [64, 512, 128, 24],
                          loss_fn,

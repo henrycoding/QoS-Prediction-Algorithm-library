@@ -9,3 +9,4 @@ WSDream_1_SERVICE_DIR = os.path.join(WSDream_1_DIR, 'wslist.txt')
 
 from scdmlab.data.dataset.dataset import Dataset
 from scdmlab.data.dataset.MatrixDataset import MatrixDataset
+from scdmlab.data.dataset.InfoDataset import InfoDataset

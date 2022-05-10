@@ -37,16 +37,25 @@ class InfoDataset(Dataset):
         self.user_info_data = self._load_info_data('user')
         self.service_info_data = self._load_info_data('service')
         self.user_enable_columns = self.config['user_enable_columns']
-        self.service_enable_columns = self.config['service_enable_column']
+        self.service_enable_columns = self.config['service_enable_columns']
         self.user_feature2idx, user_feature2num = self._fit(self.user_info_data, self.user_enable_columns)
         self.service_feature2idx, service_feature2num = self._fit(self.service_info_data, self.service_enable_columns)
 
     @cache4method
-    def query(self, id, info_data, enabled_columns, feature2idx):
-        row = info_data.iloc[id, :]
+    def query_user(self, uid):
+        row = self.user_info_data.iloc[uid, :]
         r = []
-        for column in enabled_columns:
-            idx = feature2idx[column][row[column]]
+        for column in self.user_enable_columns:
+            idx = self.user_feature2idx[column][row[column]]
+            r.append(idx)
+        return r
+
+    @cache4method
+    def query_service(self, sid):
+        row = self.service_info_data.iloc[sid, :]
+        r = []
+        for column in self.service_enable_columns:
+            idx = self.service_feature2idx[column][row[column]]
             r.append(idx)
         return r
 
@@ -54,9 +63,8 @@ class InfoDataset(Dataset):
         r = []
         for row in triad_data:
             uid, sid, rating = int(row[0]), int(row[1]), float(row[2])
-            user_info = self.query(uid, self.user_info_data, self.user_enable_columns, self.user_feature2idx)
-            service_info = self.query(sid, self.service_info_data, self.service_enable_columns,
-                                      self.service_feature2idx)
+            user_info = self.query_user(uid)
+            service_info = self.query_service(sid)
             r.append([user_info, service_info, rating])
         return r
 

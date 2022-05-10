@@ -1,2 +1,5 @@
-user_enable_columns = ["[User ID]", "[Country]", "[AS]"]
-service_enable_columns = ["[Service ID]", "[Country]", "[AS]"]
+embedding_size: 16
+mlp_hidden_size: [ 32, 16, 8 ]
+dropout_prob: 0.1
+user_enable_columns: [ "[User ID]", "[Country]"]
+service_enable_columns: [ "[Service ID]", "[Country]"]

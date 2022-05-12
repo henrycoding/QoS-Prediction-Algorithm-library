@@ -24,7 +24,7 @@ def save_checkpoint(state,
     if is_best:
         print("=> Saving a new best")
         print(file_path)
-        torch.save(state, file_path)  # save checkpoint
+        # torch.save(state, file_path)  # save checkpoint
     else:
         print("=> Validation Accuracy did not improve")
 

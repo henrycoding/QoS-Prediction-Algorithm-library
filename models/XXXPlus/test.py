@@ -92,7 +92,7 @@ model = FedXXXLaunch(user_params, item_params, 48, 128, [128, 64, 32, 16],
 """
 
 epochs = 3000
-density = 0.05
+density = 0.2
 type_ = "rt"
 
 is_fed = False
@@ -154,9 +154,9 @@ if is_fed:
         "item_embedding_params": item_params,
         "in_size": 48,
         "output_size": 128,
-        "blocks_size": [256, 128, 64, 32, 16],
+        "blocks_size": [128, 64, 32, 16],
         "batch_size": -1,
-        "deepths": [1, 3, 2, 1],
+        "deepths": [3,3,3],
         "activation": activation,
         "d_triad": train_data,
         "test_d_triad": test_data,
@@ -186,10 +186,10 @@ else:
     test_dataloader = DataLoader(test_dataset, batch_size=2048)
 
 
-    model = XXXPlusModel(user_params, item_params, 48, 128, [256, 128, 64, 32, 16],
-                         [1,2,2,1], loss_fn, activation, [144,32])
+    model = XXXPlusModel(user_params, item_params, 48, 128, [128, 64, 32, 16],
+                         [3,3,3], loss_fn, activation, [144,32])
 
-    opt = Adam(model.parameters(), lr=0.0005)
+    opt = Adam(model.parameters(), lr=0.0005, weight_decay=1e-9)
     # opt = SGD(model.parameters(), lr=0.01)
 
     model.fit(train_dataloader,

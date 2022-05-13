@@ -167,7 +167,7 @@ class Config(object):
             self.final_config_dict['data_path'] = os.path.join(ROOT_PATH, 'dataset', self.dataset)
 
         if hasattr(self.model_class, 'input_type'):
-            self.final_config_dict['MODEL_INPUT_TYPE'] = self.model_class.input_type
+            self.final_config_dict['INPUT_TYPE'] = self.model_class.input_type
         else:
             raise ValueError("Model should has attr 'input_type'")
 

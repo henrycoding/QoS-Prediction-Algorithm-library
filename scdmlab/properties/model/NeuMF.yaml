@@ -1,10 +1,10 @@
-gmf_embedding_size: 64
-mlp_embedding_size: 64
+gmf_embedding_size: 16
+mlp_embedding_size: 16
 mlp_hidden_size: [ 64,32,16 ]
 dropout_prob: 0.1
 gmf_train: True
 mlp_train: True
 
 use_pretrain: False
-mf_pretrain_path: ~
+gmf_pretrain_path: ~
 mlp_pretrain_path: ~

@@ -13,7 +13,7 @@ def create_dataset(config):
     if hasattr(dataset_module, config['model'] + 'Dataset'):
         dataset_class = getattr(dataset_module, config['model'] + 'Dataset')
     else:
-        input_type = config['MODEL_INPUT_TYPE']
+        input_type = config['INPUT_TYPE']
         type2class = {
             InputType.MATRIX: 'MatrixDataset',
             InputType.INFO: 'InfoDataset',

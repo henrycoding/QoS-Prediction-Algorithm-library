@@ -34,12 +34,12 @@ _C.MODEL.SAVE_NAME = ''
 _C.TRAIN = CN()
 _C.TRAIN.DATA_TYPE = 'rt'
 _C.TRAIN.DENSITY_LIST = [0.05]  # training set density, should be a list type
-_C.TRAIN.BATCH_SIZE = 64
-_C.TRAIN.LATENT_DIM_GMF = 8
-_C.TRAIN.LATENT_DIM_MLP = 8
+_C.TRAIN.BATCH_SIZE = 256
+_C.TRAIN.LATENT_DIM_GMF = 16
+_C.TRAIN.LATENT_DIM_MLP = 16
 _C.TRAIN.NUM_EPOCHS = 200
 
-_C.TRAIN.LAYERS = [16, 32, 16, 8]  # layes[0] is the concat of latent user vector and latent item vector
+_C.TRAIN.LAYERS = [32, 64, 32, 16]  # layes[0] is the concat of latent user vector and latent item vector
 
 # loss function
 _C.TRAIN.LOSS_FN = CN()

@@ -28,6 +28,7 @@ def data_preparation(config, dataset, **kwargs):
     model_type = config['MODEL_TYPE']
     density = kwargs.get('density')
     dataset_type = kwargs.get('dataset_type')
+
     if model_type == ModelType.GENERAL:
         train_data, test_data = dataset.build(density, dataset_type)
 

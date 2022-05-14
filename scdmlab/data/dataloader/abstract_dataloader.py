@@ -1,3 +1,7 @@
+import math
+import torch
+
+
 class AbstractDataLoader:
     def __init__(self, config, dataset, shuffle=False):
         self.config = config
@@ -6,7 +10,22 @@ class AbstractDataLoader:
         self.batch_size = self.model = None
         self.shuffle = shuffle
 
-    def _init_batch_size(self):
+    def _init_batch_size_and_step(self):
+        raise NotImplementedError('Method [init_batch_size_and_step] should be implemented')
+
+    def __len__(self):
+        return math.ceil(self.pr_end / self.step)
+
+    def __iter__(self):
+        if self.shuffle:
+            self._shuffle()
+        return self
+
+    def __next__(self):
+        if self.pr >= self.pr_end:
+            self.pr = 0
+            raise StopIteration()
+        return self._next_batch_data()
 
 # import random
 # from copy import deepcopy

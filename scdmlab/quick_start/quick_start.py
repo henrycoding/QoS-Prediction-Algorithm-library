@@ -23,10 +23,10 @@ def run_scdmlab(model=None, dataset=None, config_file_list=None, config_dict=Non
     dataset = create_dataset(config)
 
     if config['MODEL_TYPE'] == ModelType.GENERAL:
-        for cur_density in config['density']:
-            for cur_dataset_type in config['dataset_type']:
-                train_data, test_data = data_preparation(config, dataset, density=cur_density,
-                                                         dataset_type=cur_dataset_type)
+        for density in config['density']:
+            for dataset_type in config['dataset_type']:
+                train_data, test_data = data_preparation(config, dataset, density=density,
+                                                         dataset_type=dataset_type)
 
                 # model loading and initialization
                 init_seed(config['seed'], config['reproducibility'])

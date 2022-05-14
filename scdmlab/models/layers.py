@@ -15,6 +15,8 @@ def activation_layer(activation_name='relu'):
             activation = nn.Tanh()
         elif activation_name.lower() == 'relu':
             activation = nn.ReLU()
+        elif activation_name.lower() == 'gelu':
+            activation = nn.GELU()
         elif activation_name.lower() == 'leakyrelu':
             activation = nn.LeakyReLU()
         elif activation_name.lower() == 'none':
@@ -60,3 +62,21 @@ class MLPLayers(nn.Module):
 
     def forward(self, input_feature):
         return self.mlp_layers(input_feature)
+
+
+class ResidualLayer(nn.Module):
+    def __init__(self, input_size, hidden_size):
+        super(ResidualLayer, self).__init__()
+        self.linearMapping = nn.Linear(input_size, hidden_size, bias=False)
+        self.bn = nn.BatchNorm1d(hidden_size)
+        self.gelu = nn.GELU()
+        self.layer = nn.Linear(hidden_size, hidden_size)
+
+    def forward(self, input_feature):
+        X = self.linearMapping(input_feature)
+
+        Y = self.bn(X)
+        Y = self.gelu(Y)
+        Y = self.layer(Y)
+        Y += X
+        return Y

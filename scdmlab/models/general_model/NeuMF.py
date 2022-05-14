@@ -1,24 +1,3 @@
-# import torch
-# from torch import nn
-# import torch.nn.functional as F
-# from yacs.config import CfgNode
-#
-# from models.base import ModelBase
-#
-# # config
-# from models.NeuMF.config import get_cfg_defaults
-# from scdmlab.model.GMF import get_cfg_defaults as get_gmf_config
-# from models.MLP.config import get_cfg_defaults as get_mlp_config
-#
-# # model utils
-# from scdmlab.utils import ModelTest, load_checkpoint
-#
-# from root import absolute
-#
-# from scdmlab.model.GMF.model import GMF
-# from models.MLP.model import MLP
-#
-#
 import torch
 import torch.nn as nn
 from torch.nn.init import normal_

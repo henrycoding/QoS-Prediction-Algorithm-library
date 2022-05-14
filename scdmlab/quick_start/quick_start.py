@@ -38,14 +38,3 @@ def run_scdmlab(model=None, dataset=None, config_file_list=None, config_dict=Non
                 trainer.fit(train_data, test_data, saved=saved, show_progress=config['show_progress'])
 
                 test_result = trainer.evaluate(test_data, load_best_model=saved, show_progress=config['show_progress'])
-
-    # trainer loading and initialization
-    # trainer = get_trainer(config['MODEL_TYPE'], config['model'])(config, model)
-
-    # model loading and initalization
-
-    # configurations initialization
-    # config = Config(model=args.model, dataset=args.dataset, dataset_type=args.dataset_type,
-    #                 config_file=args.config_file)
-    #
-    # dataset = get_dataset(config['dataset'], config['dataset_type'])

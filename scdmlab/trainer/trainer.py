@@ -117,6 +117,7 @@ class GeneralTrainer(AbstractTrainer):
         if valid_result < self.best_valid_result:
             self._save_checkpoint(epoch_idx)
             self.best_valid_result = valid_result
+        return valid_result
 
     def _save_checkpoint(self, epoch, verbose=True, **kwargs):
         """Store the model parameters information and training information.
@@ -148,7 +149,8 @@ class GeneralTrainer(AbstractTrainer):
             self.logger.info(f"Training Epoch:[{epoch_idx + 1}/{self.epochs}] Loss:{train_loss:.4f}")
 
             if (epoch_idx + 1) % self.eval_step == 0:
-                self._valid_epoch(epoch_idx, valid_data, show_progress)
+                valid_loss = self._valid_epoch(epoch_idx, valid_data, show_progress)
+                self.logger.info(f"Valid Loss:{valid_loss:.4f}")
 
     @torch.no_grad()
     def evaluate(self, eval_data, load_best_model=True, model_file=None, show_progress=False):

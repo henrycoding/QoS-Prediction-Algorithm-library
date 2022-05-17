@@ -1,7 +1,7 @@
-gmf_embedding_size: 16
-mlp_embedding_size: 16
-mlp_hidden_size: [ 64,32,16 ]
-dropout_prob: 0.1
+gmf_embedding_size: 8
+mlp_embedding_size: 8
+mlp_hidden_size: [ 32, 16 ]
+dropout_prob: 0
 gmf_train: True
 mlp_train: True
 

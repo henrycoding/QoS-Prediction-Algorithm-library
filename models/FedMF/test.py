@@ -10,7 +10,7 @@ from utils.mylogger import TNLog
 """
 RESULT FedMF: 
 1000epoch
-Density:0.05,type:rt,mae:0.5949614110683237,mse:2.1892629584652785,rmse:1.4796158144820157
+Density:0.05,type:rt,mae:0.5762619416345588,mse:2.083359291985126,rmse:1.4433846652868132
 Density:0.1,type:rt,mae:0.5065232463307372,mse:1.6816029233716594,rmse:1.2967663333737731
 Density:0.15,type:rt,mae:0.466420129810779,mse:1.4792783323010215,rmse:1.216255866296653
 Density:0.2,type:rt,mae:0.43765304163567553,mse:1.3690546770840173,rmse:1.1700660994508034
@@ -36,10 +36,10 @@ freeze_random()  # 冻结随机数 保证结果一致
 for density in [0.2]:
 
     # 1
-    type_ = "tp"
+    type_ = "rt"
     latent_dim = 8
     # lr = 0.0001
-    lr = 0.00005
+    lr = 0.0001
     lambda_ = 0.1
     epochs = 1000
 

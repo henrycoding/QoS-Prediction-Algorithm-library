@@ -24,10 +24,10 @@ RESULT FedGMF:
 
 freeze_random()  # 冻结随机数 保证结果一致
 
-density = 0.2
+density = 0.05
 
 
-type_ = "tp"
+type_ = "rt"
 rt_data = MatrixDataset(type_)
 train_data, test_data = rt_data.split_train_test(density)
 

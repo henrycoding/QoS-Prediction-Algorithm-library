@@ -8,6 +8,7 @@ from models.base.fedbase import FedModelBase
 from root import absolute
 from tensorboard import program
 from torch import dropout, nn
+from torch.nn.init import normal_
 from torch.utils.data.dataloader import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -71,6 +72,13 @@ class XXXPlus(nn.Module):
                 nn.Linear(linear_layers[-1], output_dim)
                 # "output": nn.Linear(linear_layers[-1], output_dim)
             }))
+
+        # parameters initialization
+        self.apply(self._init_weights)
+
+    def _init_weights(self, module):
+        if isinstance(module, nn.Embedding):
+            normal_(module.weight.data, mean=0.0, std=0.01)
 
             
     def forward(self, user_idxes: list, item_idxes: list):

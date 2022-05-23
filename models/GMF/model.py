@@ -1,7 +1,7 @@
 import torch
 from models.base import ModelBase
 from torch import nn
-
+from torch.nn.init import normal_
 
 class GMF(nn.Module):
     def __init__(self,
@@ -29,6 +29,14 @@ class GMF(nn.Module):
             self.fc_layers.append(nn.Linear(in_size, out_size))
 
         self.fc_output = nn.Linear(self.layers[-1], output_dim)
+
+        # parameters initialization
+        self.apply(self._init_weights)
+
+    def _init_weights(self, module):
+        if isinstance(module, nn.Embedding):
+            normal_(module.weight.data, mean=0.0, std=0.01)
+
 
     def forward(self, user_idx, item_idx):
         user_embedding = self.embedding_user(user_idx)

@@ -154,9 +154,11 @@ class ServerBase(object):
         if len(params) != 0:
             # 获得不同的键
             for k, v in params[0].items():
-                if personal_layer_name in k:
-                    print(k)
-                    continue
+                # 个性化层不做聚合
+                # if personal_layer_name in k:
+                #     print(k)
+                #     continue
+                # 实际操作个性化层也做聚合,在客户端再覆盖
                 for it, param in enumerate(params):
 
                     if it == 0:

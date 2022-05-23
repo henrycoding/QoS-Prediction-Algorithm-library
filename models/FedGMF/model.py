@@ -18,7 +18,7 @@ from utils.mylogger import TNLog
 
 from .client import Clients
 from .server import Server
-
+from torch.nn.init import normal_
 
 class FedGMF(nn.Module):
     def __init__(self, n_user, n_item, layer, dim=8, output_dim=1) -> None:
@@ -41,6 +41,13 @@ class FedGMF(nn.Module):
             self.fc_layers.append(nn.Linear(in_size, out_size))
 
         self.fc_output = nn.Linear(self.layer[-1], output_dim)
+
+        # parameters initialization
+        self.apply(self._init_weights)
+
+    def _init_weights(self, module):
+        if isinstance(module, nn.Embedding):
+            normal_(module.weight.data, mean=0.0, std=0.01)
 
     def forward(self, user_idx, item_idx):
         user_embedding = self.embedding_user(user_idx)

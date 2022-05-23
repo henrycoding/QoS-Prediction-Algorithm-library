@@ -29,7 +29,7 @@ freeze_random()  # 冻结随机数 保证结果一致
 # logger.initial_logger()
 
 for density in [0.05, 0.1, 0.15, 0.2]:
-    type_ = "rt"
+    type_ = "tp"
     rt_data = MatrixDataset(type_)
     train_data, test_data = rt_data.split_train_test(density)
 
@@ -45,7 +45,7 @@ for density in [0.05, 0.1, 0.15, 0.2]:
     loss_fn = nn.L1Loss()
 
     NeuMF = NeuMFModel(loss_fn, rt_data.row_n, rt_data.col_n, latent_dim=dim)
-    opt = Adam(NeuMF.parameters(), lr=lr, weight_decay=1e-4)
+    opt = Adam(NeuMF.parameters(), lr=lr)
 
     NeuMF.fit(train_dataloader, epochs, opt, eval_loader=test_dataloader,
               save_filename=f"Density_{density}")

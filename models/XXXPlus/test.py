@@ -93,9 +93,9 @@ model = FedXXXLaunch(user_params, item_params, 48, 128, [128, 64, 32, 16],
 
 epochs = 3000
 density = 0.2
-type_ = "rt"
+type_ = "tp"
 
-is_fed = False
+is_fed = True
 
 
 def data_preprocess(triad,
@@ -133,13 +133,13 @@ activation = nn.GELU
 user_params = {
     "type_": "cat",  # embedding层整合方式 stack or cat
     "embedding_nums": u_info.embedding_nums,  # 每个要embedding的特征的总个数
-    "embedding_dims": [8, 8, 8],
+    "embedding_dims": [32, 32, 32],
 }
 
 item_params = {
     "type_": "cat",  # embedding层整合方式 stack or cat
     "embedding_nums": i_info.embedding_nums,  # 每个要embedding的特征的总个数
-    "embedding_dims": [8, 8, 8],
+    "embedding_dims": [32, 32, 32],
 }
 
 if is_fed:
@@ -152,7 +152,7 @@ if is_fed:
     params = {
         "user_embedding_params": user_params,
         "item_embedding_params": item_params,
-        "in_size": 48,
+        "in_size": 192,
         "output_size": 128,
         "blocks_size": [128, 64, 32, 16],
         "batch_size": -1,
@@ -163,7 +163,7 @@ if is_fed:
         "loss_fn": loss_fn,
         "local_epoch": 5,
         "linear_layers": [144, 32],
-        "is_personalized": True,
+        "is_personalized": False,
         "header_epoch": None,
         "personal_layer": "my_layer",
         "output_dim": 1,

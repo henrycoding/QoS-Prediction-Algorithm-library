@@ -16,7 +16,7 @@ freeze_random()  # 冻结随机数 保证结果一致
 
 for density in [0.05, 0.1, 0.15, 0.2]:
 
-    type_ = "rt"
+    type_ = "tp"
     rt_data = MatrixDataset(type_)
     train_data, test_data = rt_data.split_train_test(density)
 

@@ -66,8 +66,7 @@ class FedNeuMF(nn.Module):
 
         # 合并模型
         vector = torch.cat([GMF_vec, MLP_vec], dim=-1)
-        linear = self.linear(vector)
-        output = self.sigmoid(linear)
+        output = self.linear(vector)
 
         return output
 

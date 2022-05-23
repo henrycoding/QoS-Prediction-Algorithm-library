@@ -2,6 +2,7 @@ import torch
 from models.base import ModelBase
 from torch import nn
 import torch.nn.functional as F
+from torch.nn.init import normal_
 
 
 class NeuMF(nn.Module):
@@ -30,7 +31,14 @@ class NeuMF(nn.Module):
 
         # 合并模型
         self.linear = nn.Linear(2 * latent_dim, output_dim)
-        self.sigmoid = nn.Sigmoid()
+
+        # parameters initialization
+        self.apply(self._init_weights)
+
+    def _init_weights(self, module):
+        if isinstance(module, nn.Embedding):
+            normal_(module.weight.data, mean=0.0, std=0.01)
+
 
     def forward(self, user_indexes, item_indexes):
         # GMF模型计算
@@ -53,8 +61,7 @@ class NeuMF(nn.Module):
         # 合并模型
         vector = torch.cat([GMF_vec, MLP_vec], dim=-1)
         linear = self.linear(vector)
-        output = self.sigmoid(linear)
-
+        output = linear
         return output
 
 

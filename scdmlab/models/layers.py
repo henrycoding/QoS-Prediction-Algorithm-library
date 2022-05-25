@@ -50,6 +50,7 @@ class MLPLayers(nn.Module):
                 mlp_modules.append(activation_func)
 
         self.mlp_layers = nn.Sequential(*mlp_modules)
+        # TODO MLP初始化
         if self.init_method is not None:
             self.apply(self.init_weights)
 
@@ -67,16 +68,28 @@ class MLPLayers(nn.Module):
 class ResidualLayer(nn.Module):
     def __init__(self, input_size, hidden_size):
         super(ResidualLayer, self).__init__()
-        self.linearMapping = nn.Linear(input_size, hidden_size, bias=False)
-        self.bn = nn.BatchNorm1d(hidden_size)
+
+        self.bn1 = nn.BatchNorm1d(input_size)
+        self.layer1 = nn.Linear(input_size, hidden_size)
+
+        self.bn2 = nn.BatchNorm1d(hidden_size)
+        self.layer2 = nn.Linear(hidden_size, input_size)
+
         self.gelu = nn.GELU()
-        self.layer = nn.Linear(hidden_size, hidden_size)
+
+        self.apply(self.init_weights)
+
+    def init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            normal_(module.weight.data, 0, 0.01)
 
     def forward(self, input_feature):
-        X = self.linearMapping(input_feature)
+        output_feature = self.bn1(input_feature)
+        output_feature = self.gelu(output_feature)
+        output_feature = self.layer1(output_feature)
 
-        Y = self.bn(X)
-        Y = self.gelu(Y)
-        Y = self.layer(Y)
-        Y += X
-        return Y
+        output_feature = self.bn2(output_feature)
+        output_feature = self.gelu(output_feature)
+        output_feature = self.layer2(output_feature)
+
+        return output_feature + input_feature

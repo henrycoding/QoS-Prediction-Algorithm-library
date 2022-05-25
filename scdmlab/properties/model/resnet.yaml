@@ -1,2 +1,4 @@
 embedding_size: 8
 hidden_size: [ 64,32,16 ]
+user_enable_columns: [ "[User ID]", "[Country]", "[AS]", "[Latitude]", "[Longitude]" ]
+service_enable_columns: [ "[Service ID]", "[Country]", "[AS]", "[Latitude]", "[Longitude]" ]

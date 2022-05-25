@@ -17,22 +17,33 @@ def res_net(input_size, hidden_size):
 
 
 class resnet(GeneralModel):
-    input_type = InputType.MATRIX
+    input_type = InputType.INFO
 
     def __init__(self, config, dataset):
         super(resnet, self).__init__(config, dataset)
         self.embedding_size = config['embedding_size']
         self.hidden_size = config['hidden_size']
 
-        self.user_embedding = nn.Embedding(self.num_users, self.embedding_size)
-        self.service_embedding = nn.Embedding(self.num_services, self.embedding_size)
+        self.user_id_embedding = nn.Embedding(self.num_users, self.embedding_size)
+        self.user_country_embedding = nn.Embedding(31, self.embedding_size)
+        self.user_as_embedding = nn.Embedding(137, self.embedding_size)
+
+        self.service_id_embedding = nn.Embedding(self.num_services, self.embedding_size)
+        self.service_country_embedding = nn.Embedding(74, self.embedding_size)
+        self.service_as_embedding = nn.Embedding(992, self.embedding_size)
 
         self.user_latent_vector = np.empty((self.num_users, self.hidden_size[-1]))
         self.service_latent_vector = np.empty((self.num_services, self.hidden_size[-1]))
 
-        self.user_layers = res_net(self.embedding_size, self.hidden_size)
-        self.serivce_layers = res_net(self.embedding_size, self.hidden_size)
-        self.predict_layer = nn.Linear(self.hidden_size[-1] * 2, 1)
+        user_input_size = 3 * self.embedding_size + 2
+        service_input_size = 3 * self.embedding_size + 2
+
+        self.user_latent_vector = np.empty((339, user_input_size))
+        self.service_latent_vector = np.empty((5825, service_input_size))
+        self.user_layers = res_net(user_input_size, self.hidden_size)
+        self.service_layers = res_net(service_input_size, self.hidden_size)
+
+        self.predict_layer = nn.Linear(user_input_size + service_input_size, 1)
 
         # define loss
         self.loss = nn.L1Loss()
@@ -49,12 +60,26 @@ class resnet(GeneralModel):
             self.user_latent_vector[user[i]] = u[i]
             self.service_latent_vector[service[i]] = s[i]
 
-    def forward(self, user, service):
-        user_embedding = self.user_embedding(user)
-        service_embedding = self.service_embedding(service)
+        self.user_latent_vectors = torch.tensor(self.user_latent_vector).to(self.device)
+        self.service_latent_vector = torch.tensor(self.service_latent_vector).to(self.device)
 
-        u = nn.Sequential(*self.user_layers)(user_embedding)
-        s = nn.Sequential(*self.serivce_layers)(service_embedding)
+    def forward(self, user, service):
+        user_id_embedding = self.user_id_embedding(user[:, 0])
+        user_country_embedding = self.user_country_embedding(user[:, 1])
+        user_as_embedding = self.user_as_embedding(user[:, 2])
+        user_loc = user[:, [3, 4]]
+
+        service_id_embedding = self.service_id_embedding(service[:, 0])
+        service_country_embedding = self.service_country_embedding(service[:, 1])
+        service_as_embedding = self.service_as_embedding(service[:, 2])
+        service_loc = service[:, [3, 4]]
+
+        user_latent_vector = torch.cat([user_id_embedding, user_country_embedding, user_as_embedding, user_loc], dim=1)
+        service_latent_vector = torch.cat([service_id_embedding, service_country_embedding,service_as_embedding, service_loc], dim=1)
+
+
+        u = nn.Sequential(*self.user_layers)(user_latent_vector)
+        s = nn.Sequential(*self.serivce_layers)(service_latent_vector)
 
         self._update_latent_vector(user.detach().cpu().numpy(), service.detach().cpu().numpy(),
                                    u.detach().cpu().numpy(), s.detach().cpu().numpy())
@@ -71,10 +96,12 @@ class resnet(GeneralModel):
         with torch.no_grad():
             user_latent_vector = torch.tensor(self.user_latent_vector)
             service_latent_vector = torch.tensor(self.service_latent_vector)
-            u = user_latent_vector[user].float()
-            s = service_latent_vector[service].float()
+            uid = user[:, 0].float()
+            sid = service[:, 0].float()
+            u = user_latent_vector[uid].float()
+            s = service_latent_vector[sid].float()
+
             u = u.to(self.device)
             s = s.to(self.device)
             predict = self.predict_layer(torch.cat([u, s], dim=1))
             return predict
-        # return self.forward(user, service)

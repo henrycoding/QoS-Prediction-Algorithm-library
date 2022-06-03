@@ -95,8 +95,9 @@ epochs = 3000
 density = 0.2
 type_ = "tp"
 
-is_fed = True
-
+is_fed = False
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 def data_preprocess(triad,
                     u_info_obj: InfoDataset,
@@ -133,13 +134,13 @@ activation = nn.GELU
 user_params = {
     "type_": "cat",  # embedding层整合方式 stack or cat
     "embedding_nums": u_info.embedding_nums,  # 每个要embedding的特征的总个数
-    "embedding_dims": [32, 32, 32],
+    "embedding_dims": [4, 4, 4],
 }
 
 item_params = {
     "type_": "cat",  # embedding层整合方式 stack or cat
     "embedding_nums": i_info.embedding_nums,  # 每个要embedding的特征的总个数
-    "embedding_dims": [32, 32, 32],
+    "embedding_dims": [4, 4, 4],
 }
 
 if is_fed:
@@ -152,7 +153,7 @@ if is_fed:
     params = {
         "user_embedding_params": user_params,
         "item_embedding_params": item_params,
-        "in_size": 192,
+        "in_size": 4*6,
         "output_size": 128,
         "blocks_size": [128, 64, 32, 16],
         "batch_size": -1,
@@ -161,9 +162,9 @@ if is_fed:
         "d_triad": train_data,
         "test_d_triad": test_data,
         "loss_fn": loss_fn,
-        "local_epoch": 5,
+        "local_epoch": 3,
         "linear_layers": [144, 32],
-        "is_personalized": False,
+        "is_personalized": True,
         "header_epoch": None,
         "personal_layer": "my_layer",
         "output_dim": 1,
@@ -186,10 +187,10 @@ else:
     test_dataloader = DataLoader(test_dataset, batch_size=2048)
 
 
-    model = XXXPlusModel(user_params, item_params, 48, 128, [128, 64, 32, 16],
+    model = XXXPlusModel(user_params, item_params, 4*6, 128, [128, 64, 32, 16],
                          [3,3,3], loss_fn, activation, [144,32])
 
-    opt = Adam(model.parameters(), lr=0.0005, weight_decay=1e-9)
+    opt = Adam(model.parameters(), lr=0.0005)
     # opt = SGD(model.parameters(), lr=0.01)
 
     model.fit(train_dataloader,

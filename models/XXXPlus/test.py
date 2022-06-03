@@ -96,7 +96,6 @@ density = 0.05
 type_ = "tp"
 
 is_fed = False
-
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
@@ -163,7 +162,7 @@ if is_fed:
         "d_triad": train_data,
         "test_d_triad": test_data,
         "loss_fn": loss_fn,
-        "local_epoch": 5,
+        "local_epoch": 3,
         "linear_layers": [144, 32],
         "is_personalized": True,
         "header_epoch": None,

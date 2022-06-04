@@ -1,6 +1,6 @@
 import torch
 from data import MatrixDataset, ToTorchDataset
-from models.NeuMF.model import NeuMF, NeuMFModel
+from models.NCF.model import NCF
 from root import absolute
 from torch import nn, optim
 from torch.nn.modules import loss
@@ -8,7 +8,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from utils.evaluation import mae, mse, rmse
 from root import ROOT
-from models.NeuMF.model import NeuMF, NeuMFModel
+from models.NCF.model import NCF, NCFModel
 
 import os
 # 冻结随机数
@@ -29,7 +29,7 @@ freeze_random()  # 冻结随机数 保证结果一致
 # logger.initial_logger()
 
 for density in [0.05, 0.1, 0.15, 0.2]:
-    type_ = "tp"
+    type_ = "rt"
     rt_data = MatrixDataset(type_)
     train_data, test_data = rt_data.split_train_test(density)
 
@@ -38,22 +38,22 @@ for density in [0.05, 0.1, 0.15, 0.2]:
     train_dataloader = DataLoader(train_dataset, batch_size=64)
     test_dataloader = DataLoader(test_dataset, batch_size=64)
 
-    lr = 0.005
+    lr = 0.0001
     epochs = 200
     dim = 8
 
     loss_fn = nn.L1Loss()
 
-    NeuMF = NeuMFModel(loss_fn, rt_data.row_n, rt_data.col_n, latent_dim=dim)
-    opt = Adam(NeuMF.parameters(), lr=lr)
+    ncf = NCFModel(loss_fn,rt_data.row_n, rt_data.col_n,dim,[32,16,8])
+    opt = Adam(ncf.parameters(), lr=lr)
 
-    NeuMF.fit(train_dataloader, epochs, opt, eval_loader=test_dataloader,
+    ncf.fit(train_dataloader, epochs, opt, eval_loader=test_dataloader,
               save_filename=f"Density_{density}")
 
-    y, y_pred = NeuMF.predict(test_dataloader, True)
+    y, y_pred = ncf.predict(test_dataloader, True)
     mae_ = mae(y, y_pred)
     mse_ = mse(y, y_pred)
     rmse_ = rmse(y, y_pred)
 
-    NeuMF.logger.info(
+    ncf.logger.info(
         f"Density:{density:.2f}, type:{type_}, mae:{mae_:.4f}, mse:{mse_:.4f}, rmse:{rmse_:.4f}")

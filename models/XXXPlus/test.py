@@ -91,11 +91,11 @@ model = FedXXXLaunch(user_params, item_params, 48, 128, [128, 64, 32, 16],
 
 """
 
-epochs = 100
-density = 0.05
+epochs = 3000
+density = 0.2
 type_ = "tp"
 
-is_fed = False
+is_fed = True
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 

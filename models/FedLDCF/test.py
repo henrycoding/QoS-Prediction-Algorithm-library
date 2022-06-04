@@ -53,9 +53,8 @@ i_info = InfoDataset("service", i_enable_columns)
 train, test = md.split_train_test(density)
 
 # loss_fn = nn.SmoothL1Loss()
-loss_fn = nn.L1Loss()
-
-activation = nn.GELU
+# loss_fn = nn.L1Loss()
+loss_fn = nn.HuberLoss()
 
 user_params = {
     "type_": "cat",  # embedding层整合方式 stack or cat

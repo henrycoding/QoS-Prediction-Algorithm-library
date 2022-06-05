@@ -33,11 +33,11 @@ class NCF(nn.Module):
         self.linear = nn.Linear(2 * latent_dim, output_dim)
 
         # parameters initialization
-    #     self.apply(self._init_weights)
+        self.apply(self._init_weights)
 
-    # def _init_weights(self, module):
-    #     if isinstance(module, nn.Embedding):
-    #         normal_(module.weight.data, mean=0.0, std=0.01)
+    def _init_weights(self, module):
+        if isinstance(module, nn.Embedding):
+            normal_(module.weight.data, mean=0.0, std=0.01)
 
 
     def forward(self, user_indexes, item_indexes):

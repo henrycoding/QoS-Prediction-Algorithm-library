@@ -38,8 +38,8 @@ for density in [0.05, 0.1, 0.15, 0.2]:
     train_dataloader = DataLoader(train_dataset, batch_size=64)
     test_dataloader = DataLoader(test_dataset, batch_size=64)
 
-    lr = 0.0001
-    epochs = 200
+    lr = 0.0005
+    epochs = 500
     dim = 8
 
     loss_fn = nn.L1Loss()

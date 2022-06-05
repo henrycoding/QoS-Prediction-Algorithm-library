@@ -59,4 +59,4 @@ class Clients(ClientsBase):
                                            self.device)
             self.client_nums_map[uid] = len(rows)
         print(f"Clients Nums:{len(self.clients_map)}")
-        print(f"Nums for client:", self.client_nums_map)
+        # print(f"Nums for client:", self.client_nums_map)

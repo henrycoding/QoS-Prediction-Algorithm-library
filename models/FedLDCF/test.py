@@ -18,12 +18,12 @@ from utils.model_util import count_parameters, freeze_random
 from .model import FedLDCFModel
 
 epochs = 3000
-density = 0.05
+density = 0.2
 type_ = "tp"
 
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def data_preprocess(triad,
                     u_info_obj: InfoDataset,
@@ -53,9 +53,8 @@ i_info = InfoDataset("service", i_enable_columns)
 train, test = md.split_train_test(density)
 
 # loss_fn = nn.SmoothL1Loss()
-loss_fn = nn.L1Loss()
-
-activation = nn.GELU
+# loss_fn = nn.L1Loss()
+loss_fn = nn.HuberLoss()
 
 user_params = {
     "type_": "cat",  # embedding层整合方式 stack or cat

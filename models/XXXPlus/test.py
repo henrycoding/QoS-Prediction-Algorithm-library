@@ -95,7 +95,7 @@ epochs = 3000
 density = 0.2
 type_ = "tp"
 
-is_fed = False
+is_fed = True
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 

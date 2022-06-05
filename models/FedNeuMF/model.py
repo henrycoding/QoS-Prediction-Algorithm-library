@@ -1,9 +1,14 @@
+import os
+import time
 from pickletools import optimize
 
 import torch
 import torch.nn.functional as F
 from models.base.fedbase import FedModelBase
+from root import absolute
 from torch import nn
+from torch.nn.init import normal_
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 from utils.evaluation import mae, mse, rmse
 from utils.model_util import load_checkpoint, save_checkpoint
@@ -21,7 +26,7 @@ class FedNeuMF(nn.Module):
                  layers=None,
                  output_dim=1) -> None:
         super(FedNeuMF, self).__init__()
-
+        self.personal_layer_name = "xxxxxxx"
         # GMF网络的embedding层
         self.GMF_embedding_user = nn.Embedding(num_embeddings=num_users,
                                                embedding_dim=latent_dim)
@@ -44,7 +49,13 @@ class FedNeuMF(nn.Module):
 
         # 合并模型
         self.linear = nn.Linear(2 * latent_dim, output_dim)
-        self.sigmoid = nn.Sigmoid()
+
+        # parameters initialization
+        self.apply(self._init_weights)
+
+    def _init_weights(self, module):
+        if isinstance(module, nn.Embedding):
+            normal_(module.weight.data, mean=0.0, std=0.01)
 
     def forward(self, user_indexes, item_indexes):
         # GMF模型计算
@@ -66,8 +77,8 @@ class FedNeuMF(nn.Module):
 
         # 合并模型
         vector = torch.cat([GMF_vec, MLP_vec], dim=-1)
-        output = self.linear(vector)
-
+        linear = self.linear(vector)
+        output = linear
         return output
 
 
@@ -93,6 +104,11 @@ class FedNeuMFModel(FedModelBase):
         self.loss_fn = loss_fn
         self.logger = TNLog(self.name)
         self.logger.initial_logger()
+        self.date = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+
+        save_dir = absolute(f"output/{self.name}/{self.date}/TensorBoard")
+        os.makedirs(save_dir)
+        self.writer = SummaryWriter(log_dir=save_dir)
 
     def _check(self, iterator):
         assert abs(sum(iterator) - 1) <= 1e-4
@@ -144,7 +160,7 @@ class FedNeuMFModel(FedModelBase):
             save_checkpoint(ckpt, is_best, f"output/{self.name}",
                             f"loss_{best_train_loss:.4f}.ckpt")
 
-            if (epoch + 1) % 20 == 0:
+            if (epoch + 1) % 10 == 0:
                 y_list, y_pred_list = self.predict(test_triad)
                 mae_ = mae(y_list, y_pred_list)
                 mse_ = mse(y_list, y_pred_list)
@@ -152,6 +168,9 @@ class FedNeuMFModel(FedModelBase):
 
                 self.logger.info(
                     f"Epoch:{epoch+1} mae:{mae_},mse:{mse_},rmse:{rmse_}")
+
+                self.writer.add_scalar("Test mae", mae_, epoch + 1)
+                self.writer.add_scalar("Test rmse", rmse_, epoch + 1)
 
     def predict(self, test_loader, resume=False, path=None):
         if resume:

@@ -139,8 +139,7 @@ class ServerBase(object):
     def __init__(self) -> None:
         super().__init__()
 
-    def upgrade_wich_cefficients(self, params: List[Dict], coefficients: Dict,
-                                 personal_layer_name: str):
+    def upgrade_wich_cefficients(self, params: List[Dict], coefficients: Dict):
         """使用加权平均对参数进行更新
 
         Args:

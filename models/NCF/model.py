@@ -5,9 +5,9 @@ import torch.nn.functional as F
 from torch.nn.init import normal_
 
 
-class NeuMF(nn.Module):
+class NCF(nn.Module):
     def __init__(self, num_users, num_items, latent_dim, layers=None, output_dim=1) -> None:
-        super(NeuMF, self).__init__()
+        super(NCF, self).__init__()
 
         # GMF网络的embedding层
         self.GMF_embedding_user = nn.Embedding(num_embeddings=num_users,
@@ -65,14 +65,14 @@ class NeuMF(nn.Module):
         return output
 
 
-class NeuMFModel(ModelBase):
+class NCFModel(ModelBase):
     def __init__(self, loss_fn, num_users, num_items, latent_dim, layers=None, output_dim=1, use_gpu=True) -> None:
         super().__init__(loss_fn, use_gpu)
         self.name = __class__.__name__
 
         if layers is None:
             layers = [32, 8]
-        self.model = NeuMF(num_users, num_items, latent_dim, layers=layers, output_dim=output_dim)
+        self.model = NCF(num_users, num_items, latent_dim, layers=layers, output_dim=output_dim)
         if use_gpu:
             self.model.to(self.device)
 

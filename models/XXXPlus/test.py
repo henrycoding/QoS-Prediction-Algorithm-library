@@ -92,12 +92,12 @@ model = FedXXXLaunch(user_params, item_params, 48, 128, [128, 64, 32, 16],
 """
 
 epochs = 3000
-density = 0.2
+density = 0.20
 type_ = "tp"
 
-is_fed = True
+is_fed = False
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 def data_preprocess(triad,
                     u_info_obj: InfoDataset,
@@ -164,7 +164,7 @@ if is_fed:
         "loss_fn": loss_fn,
         "local_epoch": 5,
         "linear_layers": [144, 32],
-        "is_personalized": True,
+        "is_personalized": False,
         "header_epoch": None,
         "personal_layer": "my_layer",
         "output_dim": 1,
@@ -187,11 +187,11 @@ else:
     test_dataloader = DataLoader(test_dataset, batch_size=2048)
 
 
-    model = XXXPlusModel(user_params, item_params, 24, 128, [128, 64, 32, 16],
-                         [3,3,3], loss_fn, activation, [144,32])
+    model = XXXPlusModel(user_params, item_params, 24, 128, [64, 32, 16],
+                         [3,3,3], loss_fn, activation, [144,64,32])
     print(f"模型参数:", count_parameters(model))
     
-    opt = Adam(model.parameters(), lr=0.0005,weight_decay=1e-4)
+    opt = Adam(model.parameters(), lr=0.0005)
     # opt = SGD(model.parameters(), lr=0.01)
 
     model.fit(train_dataloader,

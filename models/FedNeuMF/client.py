@@ -14,7 +14,7 @@ from utils.model_util import (nonzero_user_mean, split_d_triad,
 class Client(ClientBase):
     """客户端实体
     """
-    def __init__(self, triad, uid, model, device, batch_size=32) -> None:
+    def __init__(self, triad, uid, model, device, batch_size=-1) -> None:
         """客户端调用fit进行训练
 
         Args:

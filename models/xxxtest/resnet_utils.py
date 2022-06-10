@@ -130,12 +130,9 @@ class ResNetEncoder(nn.Module):
         super().__init__()
         self.blocks_sizes = blocks_sizes
 
-        # self.gate = nn.Sequential(
-        #     nn.Linear(in_size, self.blocks_sizes[0]),
-        #     # nn.BatchNorm1d(self.blocks_sizes[0]),
-        #     activation(),
-        #     nn.Dropout(0.5),
-        # )
+        self.gate = nn.Sequential(
+            nn.Linear(in_size, self.blocks_sizes[0]),
+        )
 
         self.in_out_block_sizes = list(zip(blocks_sizes, blocks_sizes[1:]))
 
@@ -158,6 +155,7 @@ class ResNetEncoder(nn.Module):
     #     return x, accessories
 
     def forward(self, x):
+        x = self.gate(x)
         for block in self.blocks:
             x = block(x)
         return x,None

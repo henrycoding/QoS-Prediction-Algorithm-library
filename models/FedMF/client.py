@@ -22,8 +22,8 @@ class Client(object):
             y_pred = self.user_vec @ items_vec[iid].T
             e_ui = rate - y_pred
             # 2. 根据物品特征矩阵计算用户和物品梯度
-            user_grad = -2 * e_ui * items_vec[iid] + 2 * lambda_ * self.user_vec
-            item_grad = -2 * e_ui * self.user_vec + 2 * lambda_ * items_vec[iid]
+            user_grad = -1 * e_ui * items_vec[iid] + 1 * lambda_ * self.user_vec
+            item_grad = -1 * e_ui * self.user_vec + 1 * lambda_ * items_vec[iid]
             # 3. 用户梯度更新用户特征矩阵
             self.user_vec -= lr * user_grad
             # 4. 物品梯度返回
@@ -38,7 +38,7 @@ class Clients(object):
         self.triad = triad
         self.clients_map = {}
         # self.users_vec = 2 * np.random.random((n_user, latent_dim)) - 1
-        self.users_vec = np.random.normal(0, 0.1, (n_user, latent_dim))
+        self.users_vec = np.random.normal(0, 1, (n_user, latent_dim))
 
         self._get_clients()
 

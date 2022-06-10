@@ -25,14 +25,14 @@ class MFModel(object):
         # self.item_vec = 2 * np.random.random(
         #     (self.n_item, self.latent_dim)) - 1
 
-        # self.user_vec = 2 * np.random.random(
-        #     (self.n_user, self.latent_dim)) - 1
-        # self.item_vec = 2 * np.random.random(
-        #     (self.n_item, self.latent_dim)) - 1
+        # self.user_vec = np.random.random(
+        #     (self.n_user, self.latent_dim))
+        # self.item_vec = np.random.random(
+        #     (self.n_item, self.latent_dim))
 
-        self.user_vec = np.random.normal(0, 0.1,
+        self.user_vec = np.random.normal(0, 1,
                                          (self.n_user, self.latent_dim))
-        self.item_vec = np.random.normal(0, 0.1,
+        self.item_vec = np.random.normal(0, 1,
                                          (self.n_item, self.latent_dim))
 
     def fit(self, triad, test, epochs=100, verbose=True, early_stop=True):
@@ -66,7 +66,7 @@ class MFModel(object):
 
             if verbose and (epoch + 1) % 10 == 0:
                 y_list, y_pred_list = self.predict(test)
-                print(f"[{epoch}/{epochs}] MAE:{mae(y_list,y_pred_list):.5f}")
+                print(f"[{epoch}/{epochs}] MAE:{mae(y_list,y_pred_list):.5f},RMSE:{rmse(y_list,y_pred_list):.5f}")
 
     def predict(self, triad):
         assert isinstance(self.user_vec,

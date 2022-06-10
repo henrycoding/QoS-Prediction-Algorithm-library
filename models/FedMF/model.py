@@ -19,7 +19,7 @@ class FedMF(object):
         self.logger = TNLog(self.name)
         self.logger.initial_logger()
 
-    def fit(self, epochs, lambda_, lr, test_triad, interval=200, scaler=None):
+    def fit(self, epochs, lambda_, lr, test_triad, interval=5, scaler=None):
         best_mae = None
         is_better = True
         for epoch in tqdm(range(epochs), desc="Epochs"):

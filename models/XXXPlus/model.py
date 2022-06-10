@@ -206,8 +206,7 @@ class FedXXXLaunch(FedModelBase):
             ]
             self._check(mixing_coefficients)
             self.server.upgrade_wich_cefficients(collector,
-                                                 mixing_coefficients,
-                                                 self._model.personal_layer)
+                                                 mixing_coefficients)
             # self.server.upgrade_average(collector)
 
             # 3. 服务端根据参数更新模型

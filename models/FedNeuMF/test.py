@@ -10,14 +10,16 @@ from utils.model_util import freeze_random
 
 from .model import FedNeuMFModel
 """
-RESULT FedMLP:
+RESULT FedNCF:
+0609
+01 分布 0.0005
 
 """
-
+import os
 freeze_random()  # 冻结随机数 保证结果一致
-
-density = 0.05
-type_ = "rt"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+density = 0.2
+type_ = "tp"
 rt_data = MatrixDataset(type_)
 train_data, test_data = rt_data.split_train_test(density)
 

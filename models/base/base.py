@@ -1,5 +1,6 @@
 import os
 import time
+from turtle import color
 
 import torch
 from root import absolute
@@ -72,7 +73,7 @@ class ModelBase(object):
 
             train_batch_loss = 0
             eval_total_loss = 0
-            for batch_id, batch in enumerate(train_loader):
+            for batch_id, batch in enumerate(tqdm(train_loader,ncols=40,colour="green")):
 
                 users, items, ratings = batch[0].to(self.device), batch[1].to(
                     self.device), batch[2].to(self.device)

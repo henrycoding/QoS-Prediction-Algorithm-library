@@ -18,12 +18,12 @@ from utils.model_util import count_parameters, freeze_random
 from .model import FedLDCFModel
 
 epochs = 3000
-density = 0.05
+density = 0.2
 type_ = "tp"
 
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def data_preprocess(triad,
                     u_info_obj: InfoDataset,

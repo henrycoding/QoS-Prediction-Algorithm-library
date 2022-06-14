@@ -22,13 +22,34 @@ from .model import FedXXXLaunch, XXXPlusModel
 
 """
 
-epochs = 3000
-density = 0.2
-type_ = "rt"
 
-is_fed = False
+
+config = {
+
+    "CUDA_VISIBLE_DEVICES":"1",
+    "embedding_dims":[16,16,16],
+    "density":0.2,
+    "type_":"tp",
+    "epoch":3000,
+    "is_fed":False,
+    "train_batch_size":128,
+    "lr":0.0005,
+    "in_size":16*6,
+    "out_size":None,
+    "blocks":[512,128,64,32],
+    "deepths":[1,1,1],
+    "linear_layer":[544,32],
+    "weight_decay":0
+
+}
+
+epochs = config["epoch"]
+density = config["density"]
+type_ = config["type_"]
+
+is_fed = config["is_fed"]
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = config["CUDA_VISIBLE_DEVICES"]
 
 def data_preprocess(triad,
                     u_info_obj: InfoDataset,
@@ -65,13 +86,13 @@ activation = nn.GELU
 user_params = {
     "type_": "cat",  # embedding层整合方式 stack or cat
     "embedding_nums": u_info.embedding_nums,  # 每个要embedding的特征的总个数
-    "embedding_dims": [8,4,4],
+    "embedding_dims": config["emgedding_dims"],
 }
 
 item_params = {
     "type_": "cat",  # embedding层整合方式 stack or cat
     "embedding_nums": i_info.embedding_nums,  # 每个要embedding的特征的总个数
-    "embedding_dims": [8,4,4],
+    "embedding_dims": config["emgedding_dims"],
 }
 
 if is_fed:
@@ -106,7 +127,7 @@ if is_fed:
     model = FedXXXLaunch(**params)
     print(f"模型参数:", count_parameters(model))
 
-    model.fit(epochs, 0.0005, 10, 1, f"density:{density},type:{type_}")
+    model.fit(epochs, config["lr"], 10, 1, f"density:{density},type:{type_}")
 
 else:
 
@@ -114,15 +135,16 @@ else:
     test_data = data_preprocess(test, u_info, i_info)
     train_dataset = ToTorchDataset(train_data)
     test_dataset = ToTorchDataset(test_data)
-    train_dataloader = DataLoader(train_dataset, batch_size=512)
+    train_dataloader = DataLoader(train_dataset, batch_size=config["train_batch_size"])
     test_dataloader = DataLoader(test_dataset, batch_size=2048)
 
 
-    model = XXXPlusModel(user_params, item_params, 32, 128, [64, 32, 8],
-                         [1,2], loss_fn, activation, [74,32])
+    model = XXXPlusModel(user_params, item_params, config["in_size"], config["out_size"], config["blocks"],
+                         config["deepths"], loss_fn, activation, config["linear_layer"])
     print(f"模型参数:", count_parameters(model))
+    print(model)
     
-    opt = Adam(model.parameters(), lr=0.0005)
+    opt = Adam(model.parameters(), lr=config["lr"],weight_decay=config["weight_decay"])
     # opt = SGD(model.parameters(), lr=0.01)
 
     model.fit(train_dataloader,

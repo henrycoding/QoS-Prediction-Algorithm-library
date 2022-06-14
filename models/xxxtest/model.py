@@ -51,7 +51,7 @@ class XXXPlus(nn.Module):
         self.increase_encoder = ResNetEncoder_v2(
             output_size=output_size,
             blocks_sizes=blocks_size[::-1],
-            deepths=deepths,
+            deepths=deepths[::-1],
             activation=activation)
 
         # decoder

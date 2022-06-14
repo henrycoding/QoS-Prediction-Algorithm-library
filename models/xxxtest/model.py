@@ -78,7 +78,7 @@ class XXXPlus(nn.Module):
 
     def _init_weights(self, module):
         if isinstance(module, nn.Embedding):
-            normal_(module.weight.data, mean=0.0, std=0.01)
+            normal_(module.weight.data, mean=0.0, std=0.1)
 
             
     def forward(self, user_idxes: list, item_idxes: list):

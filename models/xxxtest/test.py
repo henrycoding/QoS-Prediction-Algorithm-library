@@ -28,7 +28,7 @@ type_ = "rt"
 
 is_fed = False
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def data_preprocess(triad,
                     u_info_obj: InfoDataset,
@@ -65,13 +65,13 @@ activation = nn.GELU
 user_params = {
     "type_": "cat",  # embedding层整合方式 stack or cat
     "embedding_nums": u_info.embedding_nums,  # 每个要embedding的特征的总个数
-    "embedding_dims": [64, 32, 32],
+    "embedding_dims": [8,4,4],
 }
 
 item_params = {
     "type_": "cat",  # embedding层整合方式 stack or cat
     "embedding_nums": i_info.embedding_nums,  # 每个要embedding的特征的总个数
-    "embedding_dims": [64, 32, 32],
+    "embedding_dims": [8,4,4],
 }
 
 if is_fed:
@@ -118,8 +118,8 @@ else:
     test_dataloader = DataLoader(test_dataset, batch_size=2048)
 
 
-    model = XXXPlusModel(user_params, item_params, 24, 128, [128, 64, 32, 16],
-                         [1,1,1], loss_fn, activation, [144,32])
+    model = XXXPlusModel(user_params, item_params, 32, 128, [64, 32, 8],
+                         [1,2], loss_fn, activation, [74,32])
     print(f"模型参数:", count_parameters(model))
     
     opt = Adam(model.parameters(), lr=0.0005)

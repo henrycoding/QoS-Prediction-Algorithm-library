@@ -76,6 +76,15 @@ class ResNetBasicBlock(ResNetResidualBlock):
             nn.Linear(self.out_size, self.out_size),
         )
 
+class ResNetBasicBlock_V2(ResNetResidualBlock):
+    def __init__(self, in_size, out_size, activation=nn.ReLU):
+        super().__init__(in_size, out_size)
+        self.blocks = nn.Sequential(
+            nn.Linear(self.in_size, self.in_size),
+            activation(),
+            nn.Dropout(0.5),
+            nn.Linear(self.in_size, self.out_size),
+        )
 
 # 定义一个resnet layer层，里面会有多个block
 class ResNetLayer(nn.Module):
@@ -98,12 +107,12 @@ class ResNetLayer(nn.Module):
 
 
 class ResNetLayer_v2(nn.Module):
-    """对于[128,64] n=2时 返回 128x128, 64x64
+    """对于[128,64] n=2时 返回 128x128, 128x64
     """
     def __init__(self,
                  in_size,
                  out_size,
-                 block=ResNetBasicBlock,
+                 block=ResNetBasicBlock_V2,
                  n=1,
                  activation=nn.ReLU):
         super().__init__()
@@ -135,7 +144,7 @@ class ResNetEncoder(nn.Module):
         )
 
         self.in_out_block_sizes = list(zip(blocks_sizes, blocks_sizes[1:]))
-
+        print("LEFT:",[(in_size,out_size,n) for (in_size,out_size), n in zip(self.in_out_block_sizes, deepths)])
         self.blocks = nn.ModuleList([
             *[
                 ResNetLayer(
@@ -170,12 +179,13 @@ class ResNetEncoder_v2(nn.Module):
                  blocks_sizes=[32, 64, 128],
                  deepths=[2, 2],
                  activation=nn.ReLU,
-                 block=ResNetBasicBlock):
+                 block=ResNetBasicBlock_V2):
         super().__init__()
 
         self.blocks_sizes = blocks_sizes
 
         self.in_out_block_sizes = list(zip(blocks_sizes, blocks_sizes[1:]))
+        print("Right:",[(in_size,out_size,n) for (in_size,out_size), n in zip(self.in_out_block_sizes, deepths)])
 
         self.blocks = nn.ModuleList([
             *[

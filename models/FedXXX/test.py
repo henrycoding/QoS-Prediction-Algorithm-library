@@ -41,11 +41,11 @@ Density:0.2,type:rt,mae:0.28451427817344666,mse:1.2856311798095703,rmse:1.133856
 
 # 降低参数
 # 降低最后连接层的参数
-IS_FED = True
+IS_FED = False
 
 epochs = 3000
-desnity = 0.05
-type_ = "rt"
+desnity = 0.2
+type_ = "tp"
 
 
 

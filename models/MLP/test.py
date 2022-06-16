@@ -24,8 +24,8 @@ freeze_random()  # 冻结随机数 保证结果一致
 logger = TNLog('MLP')
 logger.initial_logger()
 
-for density in [0.05, 0.10, 0.15, 0.20]:
-    type_ = "rt"
+for density in [0.20]:
+    type_ = "tp"
     rt_data = MatrixDataset(type_)
     train_data, test_data = rt_data.split_train_test(density)
 

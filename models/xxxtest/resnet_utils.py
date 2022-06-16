@@ -54,7 +54,7 @@ class ResNetResidualBlock(ResidualBlock):
         self.shortcut = nn.Sequential(
             OrderedDict({
                 'dense': nn.Linear(self.in_size, self.out_size),
-                'dropout': nn.Dropout(0.3)
+                # 'dropout': nn.Dropout(0.3)
                 # 'bn': nn.BatchNorm1d(self.out_size)
             })) if self.should_apply_shortcut else None
 
@@ -72,8 +72,10 @@ class ResNetBasicBlock(ResNetResidualBlock):
         self.blocks = nn.Sequential(
             nn.Linear(self.in_size, self.out_size),
             activation(),
-            nn.Dropout(0.5),
+            # nn.Dropout(0.5),
             nn.Linear(self.out_size, self.out_size),
+            activation(),
+
         )
 
 class ResNetBasicBlock_V2(ResNetResidualBlock):
@@ -139,9 +141,9 @@ class ResNetEncoder(nn.Module):
         super().__init__()
         self.blocks_sizes = blocks_sizes
 
-        self.gate = nn.Sequential(
-            nn.Linear(in_size, self.blocks_sizes[0]),
-        )
+        # self.gate = nn.Sequential(
+        #     nn.Linear(in_size, self.blocks_sizes[0]),
+        # )
 
         self.in_out_block_sizes = list(zip(blocks_sizes, blocks_sizes[1:]))
         print("LEFT:",[(in_size,out_size,n) for (in_size,out_size), n in zip(self.in_out_block_sizes, deepths)])
@@ -164,7 +166,7 @@ class ResNetEncoder(nn.Module):
     #     return x, accessories
 
     def forward(self, x):
-        x = self.gate(x)
+        # x = self.gate(x)
         for block in self.blocks:
             x = block(x)
         return x,None

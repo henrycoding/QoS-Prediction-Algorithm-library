@@ -74,17 +74,23 @@ class XXXPlus(nn.Module):
             }))
 
         # parameters initialization
-        # self.apply(self._init_weights)
+        self.apply(self._init_weights)
 
-    def _init_weights(self, module):
-        if isinstance(module, nn.Embedding):
-            normal_(module.weight.data, mean=0.0, std=0.01)
+    def _init_weights(self,module):
+        std=0.01
+        if isinstance(module,nn.Linear):
+            module.weight.data.normal_(mean=0.0,std=std)
+        elif isinstance(module, nn.Embedding):
+            normal_(module.weight.data, mean=0.0, std=std)
+ 
 
             
     def forward(self, user_idxes: list, item_idxes: list):
         user_embedding = self.user_embedding(user_idxes)
         item_embedding = self.item_embedding(item_idxes)
         x = torch.cat([user_embedding, item_embedding], dim=1)
+        # x = torch.mul(user_embedding,item_embedding)
+        # x = torch.cat([user_embedding,item_embedding,x],dim=1)
         x1,y = self.decrease_encoder(x)
         x2 = self.increase_encoder(x1,y)
         x = torch.cat([x1, x2], dim=-1)

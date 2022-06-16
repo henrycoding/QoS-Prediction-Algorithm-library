@@ -96,7 +96,7 @@ class ModelBase(object):
             self.writer.add_scalar("Training Loss", loss_per_epoch, epoch + 1)
 
             # 验证
-            if (epoch + 1) % 10 == 0:
+            if (epoch + 1) % 5 == 0:
                 if eval_ == True:
                     assert eval_loader is not None, "Please offer eval dataloader"
 

@@ -157,7 +157,7 @@ class MatrixDataset(DatasetBase):
         triad_data = self.get_triad(nan_symbol)
 
         if shuffle:
-            np.random.seed(2022)
+            # np.random.seed(2022)
             np.random.shuffle(triad_data)
 
         train_n = int(self.row_n * self.col_n * density)  # 训练集数量

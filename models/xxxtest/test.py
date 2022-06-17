@@ -30,17 +30,19 @@ config = {
     "embedding_dims":[64,32,32],
     "density":0.2,
     "type_":"tp",
-    "epoch":400,
-    "is_fed":False,
+    "epoch":4000,
+    "is_fed":True,
     "train_batch_size":256,
-    "lr":0.001,
+    "lr":0.0005,
     "in_size":None,
     "out_size":None,
     "blocks":[256,128,64],
     "deepths":[1,1,1],
     "linear_layer":[320,64],
     "weight_decay":0,
-    "loss_fn":nn.L1Loss()
+    "loss_fn":nn.L1Loss(),
+    "is_personalized":True,
+    "activation":nn.ReLU
     # "备注":"embedding初始化参数0,001"
 
 }
@@ -85,7 +87,7 @@ train, test = md.split_train_test(density)
 # loss_fn = nn.L1Loss()
 loss_fn = config["loss_fn"]
 
-activation = nn.ReLU
+activation = config["activation"]
 # activation = nn.ReLU
 
 
@@ -101,7 +103,7 @@ item_params = {
     "embedding_dims": config["embedding_dims"],
 }
 
-if is_fed:
+if config["is_fed"]:
 
     fed_data_preprocess = partial(data_preprocess, is_dtriad=True)
 
@@ -111,18 +113,18 @@ if is_fed:
     params = {
         "user_embedding_params": user_params,
         "item_embedding_params": item_params,
-        "in_size": 4*6,
-        "output_size": 128,
-        "blocks_size": [64, 32, 16],
+        "in_size": config["in_size"],
+        "output_size": config["out_size"],
+        "blocks_size": config["blocks"],
         "batch_size": -1,
-        "deepths": [3,3,3],
+        "deepths": config["deepths"],
         "activation": activation,
         "d_triad": train_data,
         "test_d_triad": test_data,
-        "loss_fn": loss_fn,
+        "loss_fn": config["loss_fn"],
         "local_epoch": 5,
-        "linear_layers": [144, 32],
-        "is_personalized": False,
+        "linear_layers": config["linear_layer"],
+        "is_personalized": config["is_personalized"],
         "header_epoch": None,
         "personal_layer": "my_layer",
         "output_dim": 1,
@@ -132,7 +134,8 @@ if is_fed:
 
     model = FedXXXLaunch(**params)
     print(f"模型参数:", count_parameters(model))
-
+    print(model)
+    print(config)
     model.fit(epochs, config["lr"], 10, 1, f"density:{density},type:{type_}")
 
 else:

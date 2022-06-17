@@ -156,20 +156,24 @@ class ResNetEncoder(nn.Module):
             ]
         ])
 
-    # def forward(self, x):
-    #     x = self.gate(x)
-    #     accessories = []
-    #     # layers
-    #     for block in self.blocks:
-    #         x = block(x)
-    #         accessories.append(x)
-    #     return x, accessories
-
     def forward(self, x):
         # x = self.gate(x)
+        accessories = []
+        # layers
+        import time
+        # start = time.time()
         for block in self.blocks:
             x = block(x)
-        return x,None
+            accessories.append(x)
+        # end = time.time()
+        # print("耗时：",end-start)
+        return x, accessories
+
+    # def forward(self, x):
+    #     # x = self.gate(x)
+    #     for block in self.blocks:
+    #         x = block(x)
+    #     return x,None
 
 
 class ResNetEncoder_v2(nn.Module):
@@ -204,11 +208,14 @@ class ResNetEncoder_v2(nn.Module):
         # )
 
     def forward(self, x, accessories: list):
+        # start = time.time()
         for idx, block in enumerate(self.blocks):
-            # if idx != 0:
-            #     assert x.shape == accessories[-idx - 1].shape
-            #     x += accessories[-idx - 1]
+            if idx != 0:
+                assert x.shape == accessories[-idx - 1].shape
+                x += accessories[-idx - 1]
             x = block(x)
+        # end = time.time()
+        # print("耗时：",end-start)
         # x = self.gate(x)
         return x
 

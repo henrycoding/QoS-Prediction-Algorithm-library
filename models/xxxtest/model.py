@@ -20,7 +20,8 @@ from .client import Clients
 from .model_utils import *
 from .resnet_utils import *
 from .server import Server
-
+# Epoch:70 mae:0.3386218249797821,mse:1.3937238454818726,rmse:1.180560827255249
+# Epoch:380 mae:11.848095893859863,mse:1615.7484130859375,rmse:40.196372985839844
 
 class XXXPlus(nn.Module):
     def __init__(self,
@@ -74,7 +75,7 @@ class XXXPlus(nn.Module):
             }))
 
         # parameters initialization
-        # self.apply(self._init_weights)
+        self.apply(self._init_weights)
 
     def _init_weights(self,module):
         std=0.01

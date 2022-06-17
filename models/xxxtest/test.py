@@ -27,17 +27,17 @@ from .model import FedXXXLaunch, XXXPlusModel
 config = {
 
     "CUDA_VISIBLE_DEVICES":"0",
-    "embedding_dims":[64,32,32],
+    "embedding_dims":[16,16,16],
     "density":0.2,
     "type_":"tp",
     "epoch":4000,
-    "is_fed":True,
+    "is_fed":False,
     "train_batch_size":256,
-    "lr":0.0005,
-    "in_size":None,
+    "lr":0.001,
+    "in_size":16*6,
     "out_size":None,
     "blocks":[256,128,64],
-    "deepths":[1,1,1],
+    "deepths":[1,1],
     "linear_layer":[320,64],
     "weight_decay":0,
     "loss_fn":nn.L1Loss(),
@@ -136,7 +136,7 @@ if config["is_fed"]:
     print(f"模型参数:", count_parameters(model))
     print(model)
     print(config)
-    model.fit(epochs, config["lr"], 10, 1, f"density:{density},type:{type_}")
+    model.fit(epochs, config["lr"], 5, 1, f"density:{density},type:{type_}")
 
 else:
 

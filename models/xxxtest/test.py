@@ -19,13 +19,24 @@ from .model import FedXXXLaunch, XXXPlusModel
 """
 Fed:
 
+2,2,2
+
+[density:0.05,type:rt] Epoch:60 mae:0.39640194177627563,mse:1.8226033449172974,rmse:1.3500382900238037
+[density:0.1,type:rt] Epoch:60 mae:0.36088812351226807,mse:1.638769268989563,rmse:1.280144214630127
+[density:0.2,type:rt] Epoch:60 mae:0.3386975824832916,mse:1.5334124565124512,rmse:1.2383103370666504
+
+[density:0.05,type:tp] Epoch:100 mae:16.623676300048828,mse:3133.034912109375,rmse:55.97351837158203
+[density:0.1,type:tp] Epoch:100 mae:14.519242286682129,mse:2430.328369140625,rmse:49.29835891723633
+[density:0.15,type:tp] Epoch:100 mae:13.690592765808105,mse:2160.440673828125,rmse:46.48054122924805
+[density:0.2,type:tp] Epoch:100 mae:14.106036186218262,mse:2230.414794921875,rmse:47.22726821899414
+
 """
 
 config = {
     "CUDA_VISIBLE_DEVICES": "0",
     "embedding_dims": [2,2,2],
     "density": 0.05,
-    "type_": "rt",
+    "type_": "tp",
     "epoch": 4000,
     "is_fed": True,
     "train_batch_size": 256,

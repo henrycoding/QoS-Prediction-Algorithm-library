@@ -72,7 +72,7 @@ class ResNetBasicBlock(ResNetResidualBlock):
         self.blocks = nn.Sequential(
             nn.Linear(self.in_size, self.out_size),
             activation(),
-            # nn.Dropout(0.1),
+            nn.Dropout(0.1),
             nn.Linear(self.out_size, self.out_size),
             activation(),
 
@@ -84,7 +84,7 @@ class ResNetBasicBlock_V2(ResNetResidualBlock):
         self.blocks = nn.Sequential(
             nn.Linear(self.in_size, self.in_size),
             activation(),
-            # nn.Dropout(0.1),
+            nn.Dropout(0.1),
             nn.Linear(self.in_size, self.out_size),
             activation(),
 

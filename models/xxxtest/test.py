@@ -46,14 +46,14 @@ Fed:
 
 config = {
     "CUDA_VISIBLE_DEVICES": "0",
-    "embedding_dims": [2,2,2],
-    "density": 0.05,
-    "type_": "tp",
+    "embedding_dims": [16,16,16],
+    "density": 0.2,
+    "type_": "rt",
     "epoch": 4000,
     "is_fed": True,
     "train_batch_size": 256,
     "lr": 0.001,
-    "in_size": 2 * 6,
+    "in_size": 16 * 6,
     "out_size": None,
     "blocks": [256,128,64],
     "deepths": [1,1,1],

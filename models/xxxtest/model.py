@@ -20,7 +20,8 @@ from .client import Clients
 from .model_utils import *
 from .resnet_utils import *
 from .server import Server
-
+# Epoch:70 mae:0.3386218249797821,mse:1.3937238454818726,rmse:1.180560827255249
+# Epoch:380 mae:11.848095893859863,mse:1615.7484130859375,rmse:40.196372985839844
 
 class XXXPlus(nn.Module):
     def __init__(self,
@@ -74,17 +75,23 @@ class XXXPlus(nn.Module):
             }))
 
         # parameters initialization
-        # self.apply(self._init_weights)
+        self.apply(self._init_weights)
 
-    def _init_weights(self, module):
-        if isinstance(module, nn.Embedding):
-            normal_(module.weight.data, mean=0.0, std=0.01)
+    def _init_weights(self,module):
+        std=0.01
+        if isinstance(module,nn.Linear):
+            module.weight.data.normal_(mean=0.0,std=std)
+        elif isinstance(module, nn.Embedding):
+            normal_(module.weight.data, mean=0.0, std=std)
+ 
 
             
     def forward(self, user_idxes: list, item_idxes: list):
         user_embedding = self.user_embedding(user_idxes)
         item_embedding = self.item_embedding(item_idxes)
         x = torch.cat([user_embedding, item_embedding], dim=1)
+        # x = torch.mul(user_embedding,item_embedding)
+        # x = torch.cat([user_embedding,item_embedding,x],dim=1)
         x1,y = self.decrease_encoder(x)
         x2 = self.increase_encoder(x1,y)
         x = torch.cat([x1, x2], dim=-1)
@@ -217,7 +224,7 @@ class FedXXXLaunch(FedModelBase):
             self.writer.add_scalar("Training Loss",
                                    sum(loss_list) / len(loss_list), epoch + 1)
 
-            # print(self.clients[0].loss_list)
+            print(self.clients[0].loss_list)
             if not best_train_loss:
                 best_train_loss = sum(loss_list) / len(loss_list)
                 is_best = True

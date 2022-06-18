@@ -52,18 +52,29 @@ Fed:
 [density:0.15,type:tp] Epoch:90 mae:12.154128074645996,mse:1834.3294677734375,rmse:42.829071044921875
 [density:0.2,type:tp] Epoch:90 mae:11.706123352050781,mse:1700.9140625,rmse:41.24213790893555
 
+16 16 16
+[density:0.05,type:rt] Epoch:65 mae:0.4096967577934265,mse:1.8146902322769165,rmse:1.3471044301986694
+[density:0.1,type:rt] Epoch:75 mae:0.35850274562835693,mse:1.5438477993011475,rmse:1.2425167560577393
+[density:0.15,type:rt] Epoch:75 mae:0.33630967140197754,mse:1.4385364055633545,rmse:1.1993900537490845
+[density:0.2,type:rt] Epoch:65 mae:0.31893444061279297,mse:1.3725398778915405,rmse:1.171554446220398
+
+[density:0.05,type:tp] Epoch:80 mae:15.342988967895508,mse:2699.822509765625,rmse:51.959815979003906
+[density:0.1,type:tp] Epoch:80 mae:12.7587251663208,mse:2020.516845703125,rmse:44.95016098022461
+[density:0.15,type:tp] Epoch:80 mae:11.635480880737305,mse:1686.2298583984375,rmse:41.06372833251953
+[density:0.2,type:tp] Epoch:80 mae:11.280876159667969,mse:1615.932861328125,rmse:40.198665618896484
+
 """
 
 config = {
     "CUDA_VISIBLE_DEVICES": "0",
-    "embedding_dims": [16,16,16],
-    "density": 0.2,
-    "type_": "rt",
+    "embedding_dims": [64,64,64],
+    "density": 0.1,
+    "type_": "tp",
     "epoch": 4000,
     "is_fed": True,
     "train_batch_size": 256,
     "lr": 0.001,
-    "in_size": 16 * 6,
+    "in_size": 64 * 6,
     "out_size": None,
     "blocks": [256,128,64],
     "deepths": [1,1,1],

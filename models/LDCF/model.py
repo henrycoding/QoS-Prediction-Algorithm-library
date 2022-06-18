@@ -35,7 +35,7 @@ class LDCF(nn.Module):
         self.fc_output = nn.Linear(self.layers[-1] + 1, output_dim)
 
         # parameters initialization
-        # self.apply(self._init_weights)
+        self.apply(self._init_weights)
 
     def _init_weights(self, module):
         if isinstance(module, nn.Embedding):

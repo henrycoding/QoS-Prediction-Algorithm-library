@@ -48,6 +48,7 @@ config = {
     # "备注":"embedding初始化参数0,001"
 }
 
+
 epochs = config["epoch"]
 density = config["density"]
 type_ = config["type_"]
@@ -117,13 +118,13 @@ if config["is_fed"]:
         "in_size": config["in_size"],
         "output_size": config["out_size"],
         "blocks_size": config["blocks"],
-        "batch_size": config["fed_bs"],
+        "batch_size": -1,
         "deepths": config["deepths"],
         "activation": activation,
         "d_triad": train_data,
         "test_d_triad": test_data,
         "loss_fn": config["loss_fn"],
-        "local_epoch": config["local_epoch"],
+        "local_epoch": 5,
         "linear_layers": config["linear_layer"],
         "is_personalized": config["is_personalized"],
         "header_epoch": None,
@@ -156,10 +157,8 @@ else:
     print(f"模型参数:", count_parameters(model))
     print(model)
     print(config)
-
-    opt = Adam(model.parameters(),
-               lr=config["lr"],
-               weight_decay=config["weight_decay"])
+    
+    opt = Adam(model.parameters(), lr=config["lr"],weight_decay=config["weight_decay"])
     # opt = SGD(model.parameters(), lr=0.01)
 
     model.fit(train_dataloader,

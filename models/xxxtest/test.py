@@ -110,13 +110,25 @@ Non-Fed
 [density:0.15,type:tp] Epoch:700 mae:11.37606430053711,mse:1670.785888671875,rmse:40.875247955322266
 [density:0.2,type:tp] Epoch:700 mae:11.064590454101562,mse:1568.4791259765625,rmse:39.60403060913086
 
+0.3
+14.95 51.35
+12.51 44.34
+11.69 41.74
+11.24 39.73
+
+0.3925 1.336
+0.3567 1.257
+0.3307 1.214
+0.3186 1.185
+
+
 """
 
 config = {
     "CUDA_VISIBLE_DEVICES": "0",
     "embedding_dims": [16,16,16],
     "density": 0.2,
-    "type_": "tp",
+    "type_": "rt",
     "epoch": 4000,
     "is_fed": True,
     "train_batch_size": 256,
@@ -130,7 +142,7 @@ config = {
     "loss_fn": nn.L1Loss(),
     "is_personalized": True,
     "activation": nn.ReLU,
-    "select":0.1,
+    "select":0.3,
     "local_epoch": 5,
     "fed_bs": -1
     # "备注":"embedding初始化参数0,001"

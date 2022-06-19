@@ -224,7 +224,7 @@ class FedXXXLaunch(FedModelBase):
             self.writer.add_scalar("Training Loss",
                                    sum(loss_list) / len(loss_list), epoch + 1)
 
-            print(self.clients[0].loss_list)
+            # print(self.clients[0].loss_list)
             if not best_train_loss:
                 best_train_loss = sum(loss_list) / len(loss_list)
                 is_best = True

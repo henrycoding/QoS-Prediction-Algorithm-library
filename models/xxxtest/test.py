@@ -63,13 +63,14 @@ Fed:
 [density:0.15,type:tp] Epoch:80 mae:11.635480880737305,mse:1686.2298583984375,rmse:41.06372833251953
 [density:0.2,type:tp] Epoch:80 mae:11.280876159667969,mse:1615.932861328125,rmse:40.198665618896484
 
+32 32 32
 """
 
 config = {
     "CUDA_VISIBLE_DEVICES": "0",
     "embedding_dims": [64,64,64],
     "density": 0.1,
-    "type_": "tp",
+    "type_": "rt",
     "epoch": 4000,
     "is_fed": True,
     "train_batch_size": 256,

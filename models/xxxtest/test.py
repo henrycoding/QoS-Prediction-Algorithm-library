@@ -121,14 +121,58 @@ Non-Fed
 0.3307 1.214
 0.3186 1.185
 
+0.5
+[density:0.05,type:tp] Epoch:150 mae:14.698859214782715,mse:2498.902099609375,rmse:49.98902130126953
+
+[density:0.1,type:tp] Epoch:150 mae:12.415410995483398,mse:1921.6650390625,rmse:43.83679962158203
+
+[density:0.15,type:tp] Epoch:150 mae:11.715423583984375,mse:1752.06103515625,rmse:41.857627868652344
+
+[density:0.2,type:tp] Epoch:150 mae:10.96554946899414,mse:1530.513427734375,rmse:39.12177658081055
+
+[density:0.05,type:rt] Epoch:175 mae:0.3919405937194824,mse:1.7514203786849976,rmse:1.3234124183654785
+
+[density:0.1,type:rt] Epoch:175 mae:0.35684964060783386,mse:1.5232750177383423,rmse:1.2342102527618408
+
+[density:0.15,type:rt] Epoch:175 mae:0.32604047656059265,mse:1.4150018692016602,rmse:1.1895384788513184
+
+[density:0.2,type:rt] Epoch:150 mae:0.3133954405784607,mse:1.3681621551513672,rmse:1.169684648513794
+
+
+
+1.0
+
+[density:0.05,type:rt] Epoch:65 mae:0.4096967577934265,mse:1.8146902322769165,rmse:1.3471044301986694
+[density:0.1,type:rt] Epoch:75 mae:0.35850274562835693,mse:1.5438477993011475,rmse:1.2425167560577393
+[density:0.15,type:rt] Epoch:75 mae:0.33630967140197754,mse:1.4385364055633545,rmse:1.1993900537490845
+[density:0.2,type:rt] Epoch:65 mae:0.31893444061279297,mse:1.3725398778915405,rmse:1.171554446220398
+
+[density:0.05,type:tp] Epoch:80 mae:15.342988967895508,mse:2699.822509765625,rmse:51.959815979003906
+[density:0.1,type:tp] Epoch:80 mae:12.7587251663208,mse:2020.516845703125,rmse:44.95016098022461
+[density:0.15,type:tp] Epoch:80 mae:11.635480880737305,mse:1686.2298583984375,rmse:41.06372833251953
+[density:0.2,type:tp] Epoch:80 mae:11.280876159667969,mse:1615.932861328125,rmse:40.198665618896484
+
+
+Fed-Non-P
+
+[density:0.05,type:rt] Epoch:180 mae:0.37927231192588806,mse:1.7944732904434204,rmse:1.339579463005066
+
+
+[density:0.1,type:rt] Epoch:180 mae:0.35481879115104675,mse:1.6555014848709106,rmse:1.2866629362106323
+
+[density:0.15,type:rt] Epoch:180 mae:0.34564530849456787,mse:1.6050324440002441,rmse:1.26689875125885
+
+[density:0.2,type:rt] Epoch:175 mae:0.3376237154006958,mse:1.559515118598938,rmse:1.2488055229187012
+
+[density:0.05,type:tp] Epoch:180 mae:15.02529239654541,mse:2450.156494140625,rmse:49.499053955078125
 
 """
 
 config = {
     "CUDA_VISIBLE_DEVICES": "0",
     "embedding_dims": [16,16,16],
-    "density": 0.2,
-    "type_": "rt",
+    "density": 0.1,
+    "type_": "tp",
     "epoch": 4000,
     "is_fed": True,
     "train_batch_size": 256,
@@ -140,9 +184,9 @@ config = {
     "linear_layer": [320,64],
     "weight_decay": 0,
     "loss_fn": nn.L1Loss(),
-    "is_personalized": True,
+    "is_personalized": False,
     "activation": nn.ReLU,
-    "select":0.3,
+    "select":1,
     "local_epoch": 5,
     "fed_bs": -1
     # "备注":"embedding初始化参数0,001"

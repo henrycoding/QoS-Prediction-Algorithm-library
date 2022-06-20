@@ -97,18 +97,43 @@ Non-Fed
 [0.1_tp] Epoch:200 mae:11.252021789550781,mse:1666.812255859375,rmse:40.82661056518555
 [0.15_tp] Epoch:200 mae:10.421308517456055,mse:1445.4444580078125,rmse:38.01900100708008
 [0.2_tp] Epoch:200 mae:10.136045455932617,mse:1378.9722900390625,rmse:37.134517669677734
+
+
+0.1
+[density:0.05,type:rt] Epoch:315 mae:0.37949123978614807,mse:1.7079064846038818,rmse:1.3068689107894897
+[density:0.1,type:rt] Epoch:400 mae:0.3448878824710846,mse:1.5330452919006348,rmse:1.2381620407104492
+[density:0.15,type:rt] Epoch:400 mae:0.3228624761104584,mse:1.4494836330413818,rmse:1.2039450407028198
+[density:0.2,type:rt] Epoch:400 mae:0.3098350167274475,mse:1.3828232288360596,rmse:1.1759350299835205
+
+[density:0.05,type:tp] Epoch:700 mae:14.945842742919922,mse:2664.945068359375,rmse:51.623104095458984
+[density:0.1,type:tp] Epoch:700 mae:12.5775785446167,mse:1995.857421875,rmse:44.675018310546875
+[density:0.15,type:tp] Epoch:700 mae:11.37606430053711,mse:1670.785888671875,rmse:40.875247955322266
+[density:0.2,type:tp] Epoch:700 mae:11.064590454101562,mse:1568.4791259765625,rmse:39.60403060913086
+
+0.3
+14.95 51.35
+12.51 44.34
+11.69 41.74
+11.24 39.73
+
+0.3925 1.336
+0.3567 1.257
+0.3307 1.214
+0.3186 1.185
+
+
 """
 
 config = {
     "CUDA_VISIBLE_DEVICES": "0",
-    "embedding_dims": [2,2,2],
-    "density": 0.15,
+    "embedding_dims": [16,16,16],
+    "density": 0.2,
     "type_": "rt",
     "epoch": 4000,
     "is_fed": True,
     "train_batch_size": 256,
     "lr": 0.001,
-    "in_size": 2 * 6,
+    "in_size": 16 * 6,
     "out_size": None,
     "blocks": [256,128,64],
     "deepths": [1,1,1],
@@ -117,7 +142,7 @@ config = {
     "loss_fn": nn.L1Loss(),
     "is_personalized": True,
     "activation": nn.ReLU,
-    "select":1,
+    "select":0.3,
     "local_epoch": 5,
     "fed_bs": -1
     # "备注":"embedding初始化参数0,001"

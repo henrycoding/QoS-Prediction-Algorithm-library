@@ -157,7 +157,6 @@ Fed-Non-P
 
 [density:0.05,type:rt] Epoch:180 mae:0.37927231192588806,mse:1.7944732904434204,rmse:1.339579463005066
 
-
 [density:0.1,type:rt] Epoch:180 mae:0.35481879115104675,mse:1.6555014848709106,rmse:1.2866629362106323
 
 [density:0.15,type:rt] Epoch:180 mae:0.34564530849456787,mse:1.6050324440002441,rmse:1.26689875125885
@@ -166,12 +165,17 @@ Fed-Non-P
 
 [density:0.05,type:tp] Epoch:180 mae:15.02529239654541,mse:2450.156494140625,rmse:49.499053955078125
 
+[density:0.1,type:tp] Epoch:340 mae:13.810931205749512,mse:2036.3375244140625,rmse:45.125797271728516
+
+[density:0.15,type:tp] Epoch:340 mae:13.484705924987793,mse:1969.3216552734375,rmse:44.37704086303711
+
+[density:0.2,type:tp] Epoch:265 mae:13.477914810180664,mse:1834.0618896484375,rmse:42.825950622558594
 """
 
 config = {
     "CUDA_VISIBLE_DEVICES": "0",
     "embedding_dims": [16,16,16],
-    "density": 0.1,
+    "density": 0.2,
     "type_": "tp",
     "epoch": 4000,
     "is_fed": True,

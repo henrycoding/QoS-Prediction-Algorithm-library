@@ -122,6 +122,8 @@ Non-Fed
 0.3307 1.214
 0.3186 1.185
 
+0.5
+[density:0.05,type:tp] Epoch:150 mae:14.698859214782715,mse:2498.902099609375,rmse:49.98902130126953
 
 0.5
 [density:0.05,type:tp] Epoch:150 mae:14.698859214782715,mse:2498.902099609375,rmse:49.98902130126953
@@ -168,13 +170,18 @@ Fed-Non-P
 
 [density:0.05,type:tp] Epoch:180 mae:15.02529239654541,mse:2450.156494140625,rmse:49.499053955078125
 
+[density:0.1,type:tp] Epoch:340 mae:13.810931205749512,mse:2036.3375244140625,rmse:45.125797271728516
+
+[density:0.15,type:tp] Epoch:340 mae:13.484705924987793,mse:1969.3216552734375,rmse:44.37704086303711
+
+[density:0.2,type:tp] Epoch:265 mae:13.477914810180664,mse:1834.0618896484375,rmse:42.825950622558594
 """
 
 config = {
     "CUDA_VISIBLE_DEVICES": "0",
     "embedding_dims": [16, 16, 16],
     "density": 0.2,
-    "type_": "rt",
+    "type_": "tp",
     "epoch": 4000,
     "is_fed": True,
     "train_batch_size": 256,
@@ -186,7 +193,7 @@ config = {
     "linear_layer": [320, 64],
     "weight_decay": 0,
     "loss_fn": nn.L1Loss(),
-    "is_personalized": True,
+    "is_personalized": False,
     "activation": nn.ReLU,
     "select": 0.3,
     "local_epoch": 5,

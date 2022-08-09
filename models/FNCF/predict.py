@@ -8,7 +8,7 @@ from yacs.config import CfgNode
 
 from models.FNCF.model import NeuMF
 from models.FNCF.config import get_cfg_defaults
-from utils.LoadModelData import set_model_result
+from utils.LoadModelData import set_model_result, send_train_progress
 from utils.model_util import data_loading
 import os
 # evaluation indicator
@@ -77,8 +77,14 @@ class Predict:
         y_list = []
         self.model.to(self.device)
         self.model.eval()
+        now_step = 0
+        progress = 0
         with torch.no_grad():
             for batch in tqdm(test_loader, desc=f'Predicting Density={density:.2f}', position=0):
+                temp_progress = int((now_step / test_loader.shape[0]) * 100)
+                if temp_progress > progress:
+                    progress = temp_progress
+                    send_train_progress(progress)
                 user, item, rating = batch[0].to(self.device), \
                                      batch[1].to(self.device), \
                                      batch[2].to(self.device)

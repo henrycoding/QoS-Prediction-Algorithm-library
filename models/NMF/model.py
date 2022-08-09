@@ -179,7 +179,6 @@ def start_predict_NMF(parameters):
         if temp_progress > progress:
             progress = temp_progress
             send_train_progress(progress)
-            print(progress)
         uid, iid, y = int(row[0]), int(row[1]), float(row[2])
         y_pred = user_matrix[uid] @ item_matrix[iid].T
         y_pred_list.append(y_pred)

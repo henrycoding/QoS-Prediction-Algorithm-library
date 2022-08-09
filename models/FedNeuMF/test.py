@@ -9,6 +9,7 @@ from utils.evaluation import mae, mse, rmse
 from utils.model_util import freeze_random
 
 from model import FedNeuMFModel
+
 """
 RESULT FedMLP:
 
@@ -17,7 +18,6 @@ RESULT FedMLP:
 freeze_random()  # 冻结随机数 保证结果一致
 
 for density in [0.05, 0.1, 0.15, 0.2]:
-
     type_ = "rt"
     rt_data = MatrixDataset(type_)
     train_data, test_data = rt_data.split_train_test(density)
@@ -43,12 +43,12 @@ for density in [0.05, 0.1, 0.15, 0.2]:
         layers=[64, 32, 8],
     )
 
-    neumf.fit(epochs, lr, test_dataloader)
-    # y, y_pred = neumf.predict(
-    #     test_dataloader, False,
-    # )
-    # mae_ = mae(y, y_pred)
-    # mse_ = mse(y, y_pred)
-    # rmse_ = rmse(y, y_pred)
+    neumf.fit(epochs, lr, test_dataloader, fraction=0.1)
+    y, y_pred = neumf.predict(
+        test_dataloader, False,
+    )
+    mae_ = mae(y, y_pred)
+    mse_ = mse(y, y_pred)
+    rmse_ = rmse(y, y_pred)
 
-    # print(f"Density:{density},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")
+    print(f"Density:{density},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")

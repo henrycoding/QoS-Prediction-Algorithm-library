@@ -1,5 +1,7 @@
 import time
+from collections import defaultdict
 
+import pandas as pd
 import torch
 from data import MatrixDataset, ToTorchDataset
 from models.FNeuMF.config import get_cfg_defaults
@@ -33,6 +35,8 @@ fraction = cfg.TRAIN.FRACTION
 layers = cfg.TRAIN.LAYERS
 date = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
 
+
+result = defaultdict(list)
 for density in density_list:
     train_data, test_data = rt_data.split_train_test(density)
 
@@ -61,5 +65,7 @@ for density in density_list:
     mae_ = mae(y, y_pred)
     mse_ = mse(y, y_pred)
     rmse_ = rmse(y, y_pred)
-
+    result[density].extend([mae_, mse_, rmse_])
     print(f"Density:{density},type:{type_},mae:{mae_},mse:{mse_},rmse:{rmse_}")
+result_show = pd.DataFrame(result, index=['MAE', 'MSE', 'RMSE'])
+print(result_show)

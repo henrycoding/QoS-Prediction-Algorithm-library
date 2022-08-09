@@ -80,7 +80,13 @@ class ModelBase(object):
         self.model.eval()
         with torch.no_grad():
             eval_total_loss = 0
+            now_step = 0
+            progress = 0
             for batch in tqdm(eval_loader, desc='Evaluating', position=0):
+                temp_progress = int((now_step / eval_loader.batch_sampler) * 100)
+                if temp_progress > progress:
+                    progress = temp_progress
+                    send_train_progress(progress)
                 user, item, rating = batch[0].to(self.device), \
                                      batch[1].to(self.device), \
                                      batch[2].to(self.device)
@@ -137,7 +143,8 @@ class ModelBase(object):
         # tqdm
         for epoch in tqdm(range(num_epochs), desc=f'Training Density={self.density}'):
             progress = int(epoch / num_epochs * 100)
-            send_train_progress(progress)
+            if self.config.TRAIN.IS_WEB:
+                send_train_progress(progress)
             train_batch_loss = 0
             for batch in train_loader:
                 users, items, ratings = batch[0].to(self.device), \
@@ -159,7 +166,7 @@ class ModelBase(object):
             self._writer.add_scalar(f"{self._tensorboard_title}/Train loss", loss_per_epoch, epoch + 1)
 
             # 验证
-            if (epoch + 1) % 10 == 0:
+            if (epoch + 1) % 20 == 0:
                 self._evaluate(eval_loader, epoch, eval_loss_list)
 
     # 预测

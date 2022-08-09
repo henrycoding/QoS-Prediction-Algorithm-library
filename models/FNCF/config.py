@@ -16,7 +16,7 @@ _C.MODEL.SAVE_NAME = ''
 _C.TRAIN = CN()
 _C.TRAIN.DATA_TYPE = 'rt'
 # _C.TRAIN.DENSITY_LIST = [0.05, 0.1, 0.15, 0.2]  # training set density, should be a list type
-_C.TRAIN.DENSITY_LIST = [0.2]  # training set density, should be a list type
+_C.TRAIN.DENSITY_LIST = [0.05]  # training set density, should be a list type
 _C.TRAIN.BATCH_SIZE = 64
 _C.TRAIN.LATENT_DIM_GMF = 8
 _C.TRAIN.LATENT_DIM_MLP = 8
@@ -38,6 +38,8 @@ _C.TRAIN.PRETRAIN = False
 _C.TRAIN.GMF_MODEL_DIR = 'models/NeuMF/pretrain/gmf_model/Density_{density}.ckpt'
 _C.TRAIN.MLP_MODEL_DIR = 'models/NeuMF/pretrain/mlp_model/Density_{density}.ckpt'
 
+# run
+_C.TRAIN.IS_WEB = True
 
 
 def get_cfg_defaults():

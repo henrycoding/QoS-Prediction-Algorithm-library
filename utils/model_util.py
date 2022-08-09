@@ -6,6 +6,7 @@ import time
 
 import numpy as np
 import torch
+from tqdm import tqdm
 
 from root import absolute
 from torch import nn
@@ -17,7 +18,7 @@ from tensorboard import program
 from yacs.config import CfgNode
 
 # loading dataset
-from data import MatrixDataset, ToTorchDataset, normalization
+from data import MatrixDataset, ToTorchDataset, normalization, InfoDataset
 from torch.utils.data import DataLoader
 
 # evaluation indicator
@@ -78,14 +79,15 @@ class ModelTest:
         # TensorBoard writer
         self.writer = None
 
-    def run(self) -> None:
+    def run(self, is_fed=False) -> None:
         freeze_random()  # frozen random number 保证可重复
         # TODO
         self.writer = TensorBoardTool(self.config).run()
 
         for density in self.density_list:
             self.density = density
-            rt_data, train_dataloader, test_dataloader = data_loading(self.data_type, density, self.batch_size)
+            rt_data, train_dataloader, test_dataloader = data_loading(self.data_type, density, self.batch_size,
+                                                                      is_fed=is_fed)
             num_users = rt_data.row_n
             num_items = rt_data.col_n
 
@@ -180,8 +182,23 @@ class TensorBoardTool:
         print('TensorBoard running at ' + 'http://localhost:6006/')
         return writer
 
+def data_preprocess(triad,
+                    u_info_obj: InfoDataset,
+                    i_info_obj: InfoDataset,
+                    is_dtriad=False):
+    """生成d_triad [[triad],[p_triad]]
+    """
+    r = []
+    for row in tqdm(triad, desc="Gen d_triad"):
+        uid, iid, rate = int(row[0]), int(row[1]), float(row[2])
+        u = u_info_obj.query(uid)
+        i = i_info_obj.query(iid)
+        r.append([[uid, iid, rate], [u, i, rate]]) if is_dtriad else r.append(
+            [u, i, rate])
+    return r
 
-def data_loading(data_type: str, density: float, batch_size=64):
+
+def data_loading(data_type: str, density: float, batch_size=64, is_fed=False):
     """
     Read the raw data, devide train sets and test sets, process them into dataloader
 
@@ -202,13 +219,26 @@ def data_loading(data_type: str, density: float, batch_size=64):
     # TODO 归一化处理
     # train_data[:, -1] = normalization(train_data[:, -1])
 
-    train_dataset = ToTorchDataset(train_data)
-    test_dataset = ToTorchDataset(test_data)
+    if not is_fed:
+        train_dataset = ToTorchDataset(train_data)
+        test_dataset = ToTorchDataset(test_data)
 
-    train_dataloader = DataLoader(train_dataset, batch_size)
-    test_dataloader = DataLoader(test_dataset, batch_size)
-
-    return row_data, train_dataloader, test_dataloader
+        train_dataloader = DataLoader(train_dataset, batch_size)
+        test_dataloader = DataLoader(test_dataset, batch_size)
+        return row_data, train_dataloader, test_dataloader
+    else:
+        u_enable_columns = ["[User ID]", "[Latitude]", "[Longitude]"]
+        i_enable_columns = ["[Service ID]", "[Latitude]", "[Longitude]"]
+        u_info = InfoDataset("user", u_enable_columns)
+        i_info = InfoDataset("service", i_enable_columns)
+        # train, test = rt_data.split_train_test(density)
+        train_data_preprocess = data_preprocess(train_data, u_info, i_info, True)
+        test_data_preprocess = data_preprocess(test_data, u_info, i_info, True)
+        train_dataset, p_rain = split_d_triad(train_data_preprocess)
+        test_dataset, p_test = split_d_triad(test_data_preprocess)
+        train_dataloader = DataLoader(ToTorchDataset(p_rain), batch_size=batch_size, drop_last=True)
+        test_dataloader = DataLoader(ToTorchDataset(p_test), batch_size=batch_size, drop_last=True)
+        return row_data, train_dataloader, test_dataloader
 
 
 def use_loss_fn(params: CfgNode):

@@ -5,7 +5,7 @@ from yacs.config import CfgNode
 from tqdm import tqdm
 from models.LDCF.client import Clients
 from models.LDCF.server import Server
-from models.base import FedModelBase
+from models.base import FedModelBase, ModelBase
 from utils import TNLog
 from utils.evaluation import mae, rmse, mse
 from utils.model_util import save_checkpoint, load_checkpoint, use_loss_fn
@@ -61,6 +61,25 @@ class LDCF(nn.Module):
         logits = self.affine_output(vector)
         # rating = self.logistic(logits)
         return logits
+
+class LDCFModel(ModelBase):
+    def __init__(self, config: CfgNode, writer=None) -> None:
+        model = LDCF(config)
+        super(LDCFModel, self).__init__(model, config, writer)
+
+    def parameters(self):
+        return self.model.parameters()
+
+    def __repr__(self) -> str:
+        return str(self.model)
+
+'''
+          0.05      0.10      0.15      0.20
+MAE   0.507551  0.461609  0.411447  0.380726
+MSE   2.040553  1.968015  1.738773  1.616560
+RMSE  1.428479  1.402860  1.318625  1.271440
+'''
+
 
 
 class FedLDCFModel(FedModelBase):

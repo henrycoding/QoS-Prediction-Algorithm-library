@@ -16,7 +16,9 @@ from utils.evaluation import mae, mse, rmse
 from utils.model_util import count_parameters, freeze_random
 
 from .model import FedXXXLaunch, XXXPlusModel
+
 """
+
 Fed:
 
 2,2,2
@@ -88,8 +90,8 @@ Fed:
 [density:0.2,type:rt] Epoch:265 mae:0.3150278329849243,mse:1.3136166334152222,rmse:1.146131157875061
 
 Non-Fed
-[0.05_rt] Epoch:200 mae:0.3763183653354645,mse:1.8360363245010376,rmse:1.3550041913986206
-[0.1_rt] Epoch:200 mae:0.32560423016548157,mse:1.5566685199737549,rmse:1.247665286064148
+[0.05_rt] Epoch:15 mae:0.37389495968818665,mse:1.7189104557037354,rmse:1.3110722303390503
+[0.1_rt] Epoch:75 mae:0.32508647441864014,mse:1.5320173501968384,rmse:1.2377468347549438
 [0.15_rt] Epoch:200 mae:0.30293840169906616,mse:1.4107856750488281,rmse:1.1877650022506714
 [0.2_rt] Epoch:200 mae:0.28960633277893066,mse:1.3320720195770264,rmse:1.1541543006896973
 
@@ -161,7 +163,6 @@ Fed-Non-P
 
 [density:0.05,type:rt] Epoch:180 mae:0.37927231192588806,mse:1.7944732904434204,rmse:1.339579463005066
 
-
 [density:0.1,type:rt] Epoch:180 mae:0.35481879115104675,mse:1.6555014848709106,rmse:1.2866629362106323
 
 [density:0.15,type:rt] Epoch:180 mae:0.34564530849456787,mse:1.6050324440002441,rmse:1.26689875125885
@@ -181,9 +182,9 @@ config = {
     "CUDA_VISIBLE_DEVICES": "0",
     "embedding_dims": [16, 16, 16],
     "density": 0.05,
-    "type_": "tp",
+    "type_": "rt",
     "epoch": 4000,
-    "is_fed": True,
+    "is_fed": False,
     "train_batch_size": 256,
     "lr": 0.001,
     "in_size": 16 * 6,
@@ -208,7 +209,7 @@ type_ = config["type_"]
 is_fed = config["is_fed"]
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = config["CUDA_VISIBLE_DEVICES"]
+# os.environ["CUDA_VISIBLE_DEVICES"] = config["CUDA_VISIBLE_DEVICES"]
 
 
 def data_preprocess(triad,

@@ -100,7 +100,7 @@ def use_optimizer(network, opt, lr):
     if opt == 'sgd':
         optimizer = torch.optim.SGD(network.parameters(), lr=lr, momentum=0.99)
     elif opt == 'adam':
-        optimizer = torch.optim.Adam(network.parameters(), lr=lr, weight_decay=1e-9)
+        optimizer = torch.optim.Adam(network.parameters(), lr=lr, weight_decay=0)
     return optimizer
 
 

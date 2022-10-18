@@ -180,7 +180,7 @@ Fed-Non-P
 config = {
     "CUDA_VISIBLE_DEVICES": "0",
     "embedding_dims": [16, 16, 16],
-    "density": 0.2,
+    "density": 0.05,
     "type_": "tp",
     "epoch": 4000,
     "is_fed": True,

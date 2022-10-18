@@ -14,11 +14,20 @@ RESULT FedNCF:
 0609
 01 分布 0.0005
 
+2.5%
+Epoch:40 mae:24.383689880371094,mse:4902.00830078125,rmse:70.01434326171875
+Epoch:40 mae:0.5325819253921509,mse:2.3127601146698,rmse:1.5207761526107788
+
+
+7.5%
+Epoch:220 mae:0.4605955481529236,mse:1.9085830450057983,rmse:1.3815147876739502
+Epoch:250 mae:17.417064666748047,mse:2790.504638671875,rmse:52.825225830078125
+
 """
 import os
-freeze_random()  # 冻结随机数 保证结果一致
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-density = 0.2
+# freeze_random()  # 冻结随机数 保证结果一致
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+density = 0.075
 type_ = "tp"
 rt_data = MatrixDataset(type_)
 train_data, test_data = rt_data.split_train_test(density)
@@ -29,7 +38,7 @@ test_dataset = ToTorchDataset(test_data)
 test_dataloader = DataLoader(test_dataset, batch_size=2048)
 
 lr = 0.0005
-epochs = 3000
+epochs = 300
 # loss_fn = nn.SmoothL1Loss()
 loss_fn = nn.L1Loss()
 

@@ -13,8 +13,10 @@ class Linear(nn.Module):
                  personal_layer_name=None):
         super().__init__()
         if personal_layer_name is None:
+            # self.fc_layer = nn.Sequential(nn.Linear(in_size, out_size),
+            #                               activation(), nn.Dropout(dropout))
             self.fc_layer = nn.Sequential(nn.Linear(in_size, out_size),
-                                          activation(), nn.Dropout(dropout))
+                                          activation()) # 笑容
         else:
             self.fc_layer = nn.Sequential(
                 OrderedDict({
@@ -72,7 +74,7 @@ class ResNetBasicBlock(ResNetResidualBlock):
         self.blocks = nn.Sequential(
             nn.Linear(self.in_size, self.out_size),
             activation(),
-            nn.Dropout(0.1),
+            # nn.Dropout(0.1), # xiaorong
             nn.Linear(self.out_size, self.out_size),
             activation(),
 
@@ -84,7 +86,7 @@ class ResNetBasicBlock_V2(ResNetResidualBlock):
         self.blocks = nn.Sequential(
             nn.Linear(self.in_size, self.in_size),
             activation(),
-            nn.Dropout(0.1),
+            # nn.Dropout(0.1), # xiaorng
             nn.Linear(self.in_size, self.out_size),
             activation(),
 
@@ -144,7 +146,7 @@ class ResNetEncoder(nn.Module):
         self.blocks_sizes = blocks_sizes
 
         self.gate = nn.Sequential(
-            nn.Dropout(0.1),
+            # nn.Dropout(0.1), # xiaorong
             nn.Linear(in_size, self.blocks_sizes[0]),
         )
 

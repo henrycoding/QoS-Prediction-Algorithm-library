@@ -51,7 +51,7 @@ class FedNeuMF(nn.Module):
         self.linear = nn.Linear(2 * latent_dim, output_dim)
 
         # parameters initialization
-        # self.apply(self._init_weights)
+        self.apply(self._init_weights)
 
     def _init_weights(self, module):
         if isinstance(module, nn.Embedding):

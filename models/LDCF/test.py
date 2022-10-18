@@ -42,12 +42,11 @@ i_enable_columns = ["[Service ID]", "[Country]", "[AS]"]
 
 for density in [0.05, 0.1, 0.15, 0.2]:
 
-    type_ = "tp"
+    type_ = "rt"
     md = MatrixDataset(type_)
     u_info = InfoDataset("user", u_enable_columns)
     i_info = InfoDataset("service", i_enable_columns)
     train, test = md.split_train_test(density)
-
     user_params = {
         "type_": "cat",  # embedding层整合方式 stack or cat
         "embedding_nums": u_info.embedding_nums,  # 每个要embedding的特征的总个数
@@ -68,11 +67,11 @@ for density in [0.05, 0.1, 0.15, 0.2]:
     test_dataloader = DataLoader(test_dataset, batch_size=2048)
 
 
-    lr = 0.0005
+    lr = 0.0001
     epochs = 100
 
-    loss_fn = nn.L1Loss()
-
+    # loss_fn = nn.L1Loss()
+    loss_fn = nn.HuberLoss()
     ldcf = LDCFModel(loss_fn,user_params,item_params,[64,32,16,8])
 
 

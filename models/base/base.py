@@ -21,8 +21,9 @@ class ModelBase(object):
         super().__init__()
         self.loss_fn = loss_fn  # 损失函数
         self.optimizer = None
-        self.device = ("cuda" if
-                       (use_gpu and torch.cuda.is_available()) else "cpu")
+        self.device = "cpu"
+        # self.device = ("cuda" if
+        #                (use_gpu and torch.cuda.is_available()) else "cpu")
         self.name = self.__class__.__name__
         self.logger = TNLog(self.name)  # 日志
         self.logger.initial_logger()

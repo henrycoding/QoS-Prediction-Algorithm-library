@@ -23,6 +23,7 @@ from .server import Server
 # Epoch:70 mae:0.3386218249797821,mse:1.3937238454818726,rmse:1.180560827255249
 # Epoch:380 mae:11.848095893859863,mse:1615.7484130859375,rmse:40.196372985839844
 
+
 class XXXPlus(nn.Module):
     def __init__(self,
                  user_embedding_params,
@@ -77,13 +78,16 @@ class XXXPlus(nn.Module):
         # parameters initialization
         self.apply(self._init_weights)
 
+    # def _init_weights(self,module):
+    #     std=0.01
+    #     if isinstance(module,nn.Linear):
+    #         module.weight.data.normal_(mean=0.0,std=std)
+    #     elif isinstance(module, nn.Embedding):
+    #         normal_(module.weight.data, mean=0.0, std=std)
     def _init_weights(self,module):
         std=0.01
-        if isinstance(module,nn.Linear):
-            module.weight.data.normal_(mean=0.0,std=std)
-        elif isinstance(module, nn.Embedding):
+        if isinstance(module, nn.Embedding):
             normal_(module.weight.data, mean=0.0, std=std)
- 
 
             
     def forward(self, user_idxes: list, item_idxes: list):
@@ -156,8 +160,9 @@ class FedXXXLaunch(FedModelBase):
                  output_dim=1,
                  optimizer="adam",
                  use_gpu=True) -> None:
-        self.device = ("cuda" if
-                       (use_gpu and torch.cuda.is_available()) else "cpu")
+        # self.device = ("cuda" if
+        #                (use_gpu and torch.cuda.is_available()) else "cpu")
+        self.device = "msp"
         self.name = __class__.__name__
         self._model = XXXPlus(user_embedding_params,
                               item_embedding_params,

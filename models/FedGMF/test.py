@@ -51,10 +51,12 @@ gmf = FedGMFModel(train_data,
                     layer=[12,64,32])
 
 gmf.fit(epochs, lr, test_dataloader,1)
+torch.save(gmf,"./test.ckpt")
 y, y_pred = gmf.predict(
     test_dataloader, False,
     "/Users/wenzhuo/Desktop/研究生/科研/QoS预测实验代码/SCDM/output/FedMLPModel/loss_0.5389.ckpt"
 )
+
 mae_ = mae(y, y_pred)
 mse_ = mse(y, y_pred)
 rmse_ = rmse(y, y_pred)

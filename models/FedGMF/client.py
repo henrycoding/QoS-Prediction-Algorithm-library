@@ -27,6 +27,7 @@ class Client(ClientBase):
         self.uid = uid
         self.loss_list = []
         self.n_item = len(triad)
+        print(uid,"数量",self.n_item)
         self.batch_size = batch_size if batch_size != -1 else self.n_item
         self.data_loader = DataLoader(ToTorchDataset(self.triad),
                                       batch_size=self.batch_size)

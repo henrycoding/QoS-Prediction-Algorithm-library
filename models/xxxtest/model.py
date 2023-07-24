@@ -160,9 +160,9 @@ class FedXXXLaunch(FedModelBase):
                  output_dim=1,
                  optimizer="adam",
                  use_gpu=True) -> None:
-        # self.device = ("cuda" if
-        #                (use_gpu and torch.cuda.is_available()) else "cpu")
-        self.device = "msp"
+        self.device = ("cuda" if
+                       (use_gpu and torch.cuda.is_available()) else "cpu")
+        # self.device = "msp"
         self.name = __class__.__name__
         self._model = XXXPlus(user_embedding_params,
                               item_embedding_params,

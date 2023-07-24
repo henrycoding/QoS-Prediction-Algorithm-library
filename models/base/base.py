@@ -97,10 +97,9 @@ class ModelBase(object):
             self.writer.add_scalar("Training Loss", loss_per_epoch, epoch + 1)
 
             # 验证
-            if (epoch + 1) % 5 == 0:
+            if (epoch + 1) % 10 == 0:
                 if eval_ == True:
                     assert eval_loader is not None, "Please offer eval dataloader"
-
                     y_list,y_pred_list = self.predict(eval_loader)
                     mae_ = mae(y_list,y_pred_list)
                     mse_ = mse(y_list,y_pred_list)
@@ -199,7 +198,10 @@ class ModelBase(object):
             for batch_id, batch in tqdm(enumerate(test_loader)):
                 user, item, rating = batch[0].to(self.device), batch[1].to(
                     self.device), batch[2].to(self.device)
+                aa = time.time()
                 y_pred = self.model(user, item).squeeze()
+                bb = time.time()
+                # print(bb - aa)
                 y_real = rating.reshape(-1, 1)
                 if len(y_pred.shape) == 0:  # 防止因batch大小而变成标量,故增加一个维度
                     y_pred = y_pred.unsqueeze(dim=0)

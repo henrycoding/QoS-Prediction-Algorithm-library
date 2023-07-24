@@ -16,7 +16,6 @@ from utils.evaluation import mae, mse, rmse
 from utils.model_util import count_parameters, freeze_random
 
 from .model import FedXXXLaunch, XXXPlusModel
-
 """
 
 Fed:
@@ -176,6 +175,12 @@ Fed-Non-P
 [density:0.15,type:tp] Epoch:340 mae:13.484705924987793,mse:1969.3216552734375,rmse:44.37704086303711
 
 [density:0.2,type:tp] Epoch:265 mae:13.477914810180664,mse:1834.0618896484375,rmse:42.825950622558594
+
+
+去掉 dropout mae:0.3924892544746399,mse:1.7166827917099,rmse:1.3102223873138428 Epoch:215 mae:15.217144966125488,mse:2527.579345703125,rmse:51.8250358581543
+使用 BN mae:0.42298200726509094,mse:1.896214485168457,rmse:1.37703108787536     Epoch 145 mae 18.5340 RMSE 57.9141
+
+
 """
 
 config = {
@@ -189,12 +194,12 @@ config = {
     "lr": 0.001,
     "in_size": 16 * 6,
     "out_size": None,
-    "blocks": [256, 128, 64],
-    "deepths": [1, 1, 1],
-    "linear_layer": [320, 64],
+    "blocks": [1024,512,256, 128, 64],
+    "deepths": [1, 1, 1,1],
+    "linear_layer": [1088, 64],
     "weight_decay": 0,
     "loss_fn": nn.L1Loss(),
-    "is_personalized": False,
+    "is_personalized": True,
     "activation": nn.ReLU,
     "select": 0.3,
     "local_epoch": 5,
@@ -311,7 +316,6 @@ else:
     print(f"模型参数:", count_parameters(model))
     print(model)
     print(config)
-
     opt = Adam(model.parameters(),
                lr=config["lr"],
                weight_decay=config["weight_decay"])

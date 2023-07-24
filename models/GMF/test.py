@@ -16,7 +16,7 @@ freeze_random()  # 冻结随机数 保证结果一致
 
 for density in [0.05, 0.1, 0.15, 0.2]:
 
-    type_ = "tp"
+    type_ = "rt"
     rt_data = MatrixDataset(type_)
     train_data, test_data = rt_data.split_train_test(density)
 
@@ -39,6 +39,7 @@ for density in [0.05, 0.1, 0.15, 0.2]:
                    dim=dim,
                    layers=[64, 32])
     print(mlp)
+    torch.save(mlp.model.state_dict,"./test.ckpt")
     opt = Adam(mlp.parameters(), lr=lr)
 
     mlp.fit(train_dataloader, epochs, opt, eval_loader=test_dataloader)

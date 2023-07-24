@@ -197,8 +197,7 @@ class MatrixDataset(DatasetBase):
             np.random.shuffle(triad_data)
 
         train_n = int(self.row_n * self.col_n * density)  # 训练集数量
-        train_data, test_data = triad_data[:train_n, :], triad_data[
-            train_n:, :]
+        train_data, test_data = triad_data[:train_n, :], triad_data[train_n:, :]
 
         return train_data, test_data
 
